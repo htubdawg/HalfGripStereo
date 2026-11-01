@@ -133,7 +133,7 @@ build once against the refs).
 - **0.2.0** tested (Forest): drag and drop, eject, the knob and the keys all work; the visor looks good; the radio looked bad (sheared).
 - **0.2.1** tested (screenshot with lines): the perspective was the wrong way round (see *Owner's wishes*).
 - **0.2.2** (pushed, not released): the face converged on the screen's middle; the owner rejected it with a mock-up (see *Owner's wishes*).
-- **0.2.3** on `claude/laughing-darwin-uowk66` (pushed, **no PR yet**): the owner's mock-up built: `Face` is the flat 0.1.0 layout,
+- **0.2.3** on `claude/laughing-darwin-uowk66`, **PR #1** to `main` (open): the owner's mock-up built: `Face` is the flat 0.1.0 layout,
   square on, sides leaning toward the vanishing point (`Stereo.Lean`, default 3 px for the left side; the right about 2), knob an
   upright oval. `Stereo.Perspective` is gone (a new key, no migration). Checked: compiles, `tools/preview` (`docs/unit-face.png`),
   `docs/mockup.png` = the new face laid over the owner's 0.1.0 screenshot where the 0.1.0 unit was (PIL, by hand), next to the
@@ -143,4 +143,4 @@ build once against the refs).
 - **Waiting on the owner:** a screenshot of 0.2.3 in game. If the lean is off, `Stereo.Lean` changes it live (save the cfg).
 - **Open questions for the owner:** the sounds borrowed (`Grab1`, `Grab2`, `Reload`); should the music start before the countdown
   ends; the Open World (does it call `PlayRaceMusic`?); the Helicopter hides the wheel (the stereo is still placed from it).
-- **Next step:** the owner's look at 0.2.3; then a PR.
+- **Next step:** the owner's look at 0.2.3 and merging PR #1; after the merge, restart the branch from `origin/main`.
