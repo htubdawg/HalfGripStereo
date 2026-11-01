@@ -109,7 +109,7 @@ build once against the refs).
   tools/check.sh <halfgriprefs>/game <HalfGripTools>/dist/BepInEx/plugins/HalfGripTools/HalfGripTools.dll
   ```
 - Pictures: `dotnet run -c Release --project tools/preview -p:Refs=<halfgriprefs> -- <out dir>` writes `unit.png`/`visor.png` (one
-  pixel per cockpit pixel, for laying over a screenshot at ~4.3x on 1080p), `unit-4x.png`, `visor-4x.png`, `unit-slanted-4x.png` (slanted by the optional second argument, default 0.33, a disc half out; copy to `docs/unit-slanted.png`), `disc-4x.png`, `icon.png` (copy to
+  pixel per cockpit pixel, for laying over a screenshot at ~4.3x on 1080p), `unit-4x.png`, `visor-4x.png`, `unit-slanted-4x.png` (as the game builds it, slanted by the optional second argument, default 0.25, a disc half out; copy to `docs/unit-slanted.png`), `unit-slanted-nodisc-4x.png`, `disc-4x.png`, `icon.png` (copy to
   `Stereo/icon.png`). `docs/mockup.png` is those laid over the owner's screenshot where `StereoDash` computes they go (by hand, PIL).
 - Game code: `DOTNET_ROLL_FORWARD=Major ilspycmd -p -o <dir> <refs>/game/HalfGrip_Data/Managed/Assembly-CSharp.dll`.
 - In game (the owner tests): copy `Stereo/` to `<game>\BepInEx\HalfGripMods\`, `Debug.VerboseLog=true`, read `BepInEx\LogOutput.log`
