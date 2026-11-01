@@ -38,10 +38,10 @@ next session has, so after **every** step that changes the state of things, this
 | `Deck.cs` | Playback and the session's state (static: disc, chosen, power, pause, track, position): one `AudioSource` on the Music mixer group; soundtrack discs loop their song, next/prev change disc; MY loads each song off the disk (`UnityWebRequestMultimedia`, streamed), next/prev change song; the display's lines |
 | `Discs.cs` | The discs: the game's songs gathered from `Resources.Load` (race songs), every `MapDefinition.musicTrack/altMusicTrack` and loaded clips named `* OST`, at each scene load until all `Known` are found; duplicates (same samples) merged into one disc with aliases, logged; the MY folder |
 | `RaceMusicPatch.cs` | Prefix on `TrackManager.PlayRaceMusic`: with a stereo, the game's pick (`PickRaceSong`, private) goes to `Deck.Go` and the game's song is not started |
-| `StereoDash.cs` | Builds the head unit (right edge 0.15 left of the wheel's rim, centre 0.5 above the wheel's, at the wheel's depth; radius from the sprite, not the turning bounds), slanted by `Stereo.Slant` (each column lifted by whole pixels, `Art.Lifts`/`Art.Lift`; the 2x display lifted in casing-pixel steps so it meets the window), and the visor (camera viewport point `Visor.ScreenX/Y` projected onto the wheel's plane); sprites pivot bottom left, placed in art pixels (`UnitLocal`); cockpit pixel = median over cockpit sprites (fallback 0.05); lit casing = own copy of the wheel's material with `_BaseMap` set; the display unlit at 2x; keys = `StereoButton` (`Clickable`) on `InteriorSquareCollider`s at `sortingLayer` -100, 0.1 in front, a unit-wide one at -101 whose right click ejects (every key's right click too); the loose discs (`Loose`: sleeve → hand → slot / visor / fall → sleeve; `sticking` = disc half out of the slot, static) |
+| `StereoDash.cs` | Builds the head unit (right edge 0.15 left of the wheel's rim, centre 0.5 above the wheel's, at the wheel's depth; radius from the sprite, not the turning bounds), slanted by `Stereo.Slant` (casing columns lifted by whole pixels; knob, keys, badge and letters upright, lifted whole: `Art.SlantedHeadUnit`, `Art.LcdSlanted`; the 2x display's glass in casing-pixel steps so it meets the window), and the visor (camera viewport point `Visor.ScreenX/Y` projected onto the wheel's plane); sprites pivot bottom left, placed in art pixels (`UnitLocal`); cockpit pixel = median over cockpit sprites (fallback 0.05); lit casing = own copy of the wheel's material with `_BaseMap` set; the display unlit at 2x; keys = `StereoButton` (`Clickable`) on `InteriorSquareCollider`s at `sortingLayer` -100, 0.1 in front, a unit-wide one at -101 whose right click ejects (every key's right click too); the loose discs (`Loose`: sleeve → hand → slot / visor / fall → sleeve; `sticking` = disc half out of the slot, static) |
 | `Hand.cs` | The game's `Grabbable` subclassed: `KnobGrab` (never moves; measures the hand's turn round its middle, `angle` follows so the grip point goes round; 270 degrees = 0..10), `SleeveGrab` (the wallet's sleeve; `grabRedirect` hands the Grabber a new loose disc), `DiscGrab` (follows the hand exactly, no tilt; falls with gravity in the cockpit's plane when let go; still while in the slot) |
 | `Sounds.cs` | Borrowed clicks: `Grab1` (keys; quiet and high for each volume step), `Reload` at a higher pitch (disc in/out of the slot), `Grab2` (disc taken from a sleeve or the slot) |
-| `Art.cs` | Pixel art, managed only (so `tools/preview` draws it): `Canvas`, 3x5 font, `HeadUnit` (64x28 dash px: knob, display window, slot row 23 x 20-53, eject, 4 keys, CD badge), `Lifts`/`Lift` (the slant), `Lcd` (amber on brown with ghost segments), `LooseDisc` (31 px, full-face label, number/MY, clipped below the slot), `VisorWallet` (overlapping sleeves cut in a curve, a 7 px crescent per disc, numbers under them; `DiscCorner`, `PocketPlace`), `DrawDisc`, `LabelFor` (map colours) |
+| `Art.cs` | Pixel art, managed only (so `tools/preview` draws it): `Canvas`, 3x5 font, `HeadUnit` (64x28 dash px: knob, display window, slot row 23 x 20-53, eject, 4 keys, CD badge), `Lifts`/`Lift` (the slant, column by column: only for plain parts), `LiftRigid`/`Pieces` (knob, keys, eject, badge, and each display letter lifted whole), `SlantedHeadUnit`, `LcdSlanted` (letters rise one display pixel at a time), `Lcd` (amber on brown with ghost segments), `LooseDisc` (31 px, full-face label, number/MY, clipped below the slot), `VisorWallet` (overlapping sleeves cut in a curve, a 7 px crescent per disc, numbers under them; `DiscCorner`, `PocketPlace`), `DrawDisc`, `LabelFor` (map colours) |
 
 ## Rules that matter
 
@@ -94,6 +94,9 @@ next session has, so after **every** step that changes the state of things, this
   into the radio, with a sound; volume by **turning a dial**; **right click ejects**, the player grabs the disc and drops it back on the
   visor, or lets it fall and it puts itself back in the visor. The wallet like the owner's photo: sleeves **overlapping**, a crescent
   of each disc showing on its right.
+- 0.2.0 test (screenshot): "visor looks good but the radio looks pretty bad now"; "all the controls and what not seem to work fine".
+  Cause: shearing the whole face column by column broke the text, keys and knob apart. **Never shear detailed art per column**:
+  only plain edges and lines; details stay upright and are lifted whole.
 
 ## Checking changes
 
@@ -114,18 +117,18 @@ build once against the refs).
 
 ## Status (keep current)
 
-- **0.1.0** tested by the owner (screenshot): works; songs not duplicates. Asks in *Owner's wishes* (after 0.1.0).
-- **0.2.0** on `claude/laughing-darwin-uowk66` (pushed, **no PR yet**): head unit slanted (`Stereo.Slant`, default 0.33, a guess from
-  the screenshot's dash edge; new key, no migration); discs 31 px (fit the 34 px slot) in an overlapping wallet (123x48 for 7 discs);
-  drag a disc from its sleeve to the stereo (slides in, `Reload` sound), to the visor (back), elsewhere (falls, back in its sleeve once
-  out of sight or after 4 s; can be caught while falling); right click anywhere on the stereo or the eject key: the disc rises half
-  out of the slot (`sticking`, kept between races), grabbable; a disc dropped in while another plays swaps them; volume knob grabbed
-  and turned (clockwise louder, 10 steps, a tick each). Checked: compiles (`tools/check.sh`), `tools/preview` (`docs/visor.png`,
-  `docs/unit-slanted.png`), `docs/mockup.png` laid over the owner's 0.1.0 screenshot (PIL, by hand). **Not tested in game.**
-- **Untested guesses:** the slant's size and direction; whether a loose disc draws under the hand (log line `hand sorting`); the knob's
-  turning feel (`Grabber` cursor pull with `keepPhysicalCursorRange` = the knob's width); fall speed (600 px/s²).
-- **Waiting on the owner:** test of 0.2.0 with `Debug.VerboseLog=true`: screenshot + log (`head unit at ... slant`, `taken from the
-  visor`, `put in the slot`, `fell; back in the visor`). Check: drag in, eject, take, drop on visor, let fall; knob turn; the slant.
+- **0.1.0** tested by the owner: works; songs not duplicates.
+- **0.2.0** tested by the owner (screenshot, Forest): drag and drop, eject, the knob and the keys all work; the visor looks good; the
+  radio "looks pretty bad" (the per-column shear broke its details, see *Owner's wishes*). Its slant 0.33 was also steeper than the
+  dash beside it (the dash's lines there rise about 0.23-0.30).
+- **0.2.1** on `claude/laughing-darwin-uowk66` (pushed, **no PR yet**): only the casing's plain parts follow the slant column by column;
+  the knob, keys, eject key and badge are upright and lifted whole, and so is each display letter (rising a display pixel at a time,
+  so words do not break); default slant 0.25 (one up per four), moved on from 0.33 once by `Mod.Migrate` (`Debug.ConfigVersion` 2).
+  Checked: compiles, `tools/preview` (`docs/unit-slanted.png`), `docs/mockup.png` = the new unit laid over the owner's 0.2.0
+  screenshot at the old one's place (PIL, by hand). **Not tested in game.**
+- **Untested guesses:** whether a loose disc draws under the hand (log line `hand sorting`); fall speed (600 px/s²).
+- **Waiting on the owner:** a look at 0.2.1's radio in game (screenshot). If it still looks wrong, ask what exactly: the slant's size,
+  or the slant at all (`Stereo.Slant` 0 gives the flat 0.1.0 look).
 - **Open questions for the owner:** the sounds borrowed (`Grab1`, `Grab2`, `Reload`); should the music start before the countdown
   ends; the Open World (does it call `PlayRaceMusic`?); the Helicopter hides the wheel (the stereo is still placed from it).
-- **Next step:** the owner's test; then a PR.
+- **Next step:** the owner's look at 0.2.1; then a PR.

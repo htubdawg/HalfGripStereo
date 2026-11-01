@@ -25,14 +25,9 @@ namespace HalfGripStereo
 			Png.Save(Path.Combine(dir, "unit-4x.png"), unit.Px, unit.W, unit.H, 2);
 
 			// As in the cockpit: slanted along the dash, with a disc half out of the slot.
-			float slant = args.Length > 1 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 0.33f;
+			float slant = args.Length > 1 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 0.25f;
 			int[] lift = Art.Lifts(Art.UnitWidth, slant);
-			int[] lift2 = new int[unit.W];
-			for (int x = 0; x < unit.W; x++)
-			{
-				lift2[x] = 2 * lift[x / 2];
-			}
-			Art.Canvas slanted2 = Art.Lift(unit, lift2);
+			Art.Canvas slanted2 = Slanted(lift, "CD2 ▶ 1:23", "NEON 2");
 			Art.Canvas slanted = new Art.Canvas(slanted2.W / 2, slanted2.H / 2);
 			Art.Canvas dash = new Art.Canvas(slanted.W + 8, slanted.H + 24);
 			int left = Art.SlotDiscLeft, bottom = 13 + lift[left + Art.DiscSize / 2];
@@ -57,6 +52,7 @@ namespace HalfGripStereo
 				}
 			}
 			Png.Save(Path.Combine(dir, "unit-slanted-4x.png"), big.Px, big.W, big.H, 2);
+			Png.Save(Path.Combine(dir, "unit-slanted-nodisc-4x.png"), slanted2.Px, slanted2.W, slanted2.H, 2);
 			Art.Canvas loose = Art.LooseDisc(Art.LabelFor("MIX"), "MY", null);
 			Png.Save(Path.Combine(dir, "disc-4x.png"), loose.Px, loose.W, loose.H, 4);
 
@@ -106,6 +102,35 @@ namespace HalfGripStereo
 					big.Set(Art.LcdWindow.x * d + x, Art.LcdWindow.y * d + y, lcd[y * Art.LcdWidth + x]);
 				}
 			}
+			return big;
+		}
+
+		/// <summary>The head unit along the dash as StereoDash builds it, at the display's resolution: casing doubled, display laid on.</summary>
+		private static Art.Canvas Slanted(int[] lift, string top, string bottom)
+		{
+			Art.Canvas casing = Art.SlantedHeadUnit(null, true, 0.7f, lift);
+			int d = Art.LcdDetail;
+			Art.Canvas big = new Art.Canvas(casing.W * d, casing.H * d);
+			for (int y = 0; y < big.H; y++)
+			{
+				for (int x = 0; x < big.W; x++)
+				{
+					big.Set(x, y, casing.Get(x / d, y / d));
+				}
+			}
+			RectInt win = Art.LcdWindow;
+			int[] lcdLift = new int[Art.LcdWidth];
+			int lowest = int.MaxValue;
+			for (int x = 0; x < lcdLift.Length; x++)
+			{
+				lcdLift[x] = d * lift[win.x + x / d];
+				lowest = Math.Min(lowest, lcdLift[x]);
+			}
+			for (int x = 0; x < lcdLift.Length; x++)
+			{
+				lcdLift[x] -= lowest;
+			}
+			big.Paste(Art.LcdSlanted(top, bottom, true, lcdLift), win.x * d, win.y * d + lowest);
 			return big;
 		}
 

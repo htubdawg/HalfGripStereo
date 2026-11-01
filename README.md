@@ -1,6 +1,6 @@
 # Car Stereo
 
-**Version 0.2.0** for Half Grip 0.418, a [HalfGripTools](https://github.com/4l3x4nd3r0/HalfGripTools) mod (1.0.2 or newer).
+**Version 0.2.1** for Half Grip 0.418, a [HalfGripTools](https://github.com/4l3x4nd3r0/HalfGripTools) mod (1.0.2 or newer).
 
 A CD stereo built into your car's cockpit. It sits left of the steering wheel, and a CD wallet hangs on the sun visor with one disc for
 each song of the game's soundtrack plus one disc, **MY**, that plays your own songs from a folder on your computer. You work it with
@@ -45,7 +45,7 @@ turn on `Music.Shuffle`. The mod only reads that folder: it never writes to it o
 |---|---|---|
 | `Stereo.Enabled` | true | Off: no stereo, the game's own music |
 | `Stereo.OffsetX` / `OffsetY` | 0 | Move the stereo (cockpit units, a cockpit pixel is about 0.05) |
-| `Stereo.Slant` | 0.33 | How much the stereo leans to follow the dash (pixels up per pixel across; 0 is face on) |
+| `Stereo.Slant` | 0.25 | How much the stereo leans to follow the dash (pixels up per pixel across; 0 is face on) |
 | `Visor.Shown` | true | The CD wallet on the visor |
 | `Visor.ScreenX` / `ScreenY` | 0.3 / 0.87 | Where the wallet sits on the screen |
 | `Music.Folder` | (empty) | The MY disc's folder; empty is `Music\Half Grip` |

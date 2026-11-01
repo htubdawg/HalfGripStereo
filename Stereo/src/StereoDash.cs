@@ -72,7 +72,6 @@ namespace HalfGripStereo
 		private Texture2D unitTexture;
 		private Texture2D visorTexture;
 		private Texture2D lcdTexture;
-		private Color32[] lcdPixels;
 		private int[] lcdLifts;
 		private int lcdRows;
 		private string lcdShown;
@@ -255,7 +254,6 @@ namespace HalfGripStereo
 			}
 			lcdRows = Art.LcdHeight + Max(lcdLifts);
 			lcdTexture = MakeTexture(Art.LcdWidth, lcdRows, "StereoLcd");
-			lcdPixels = new Color32[Art.LcdWidth * Art.LcdHeight];
 			lcdShown = null;
 			Sprite(unit, "Display", lcdTexture, new Vector3(win.x * texel, (win.y + lowest / d) * texel, toward * Lift), unlit, 1);
 
@@ -893,7 +891,7 @@ namespace HalfGripStereo
 				return;
 			}
 			unitShown = key;
-			unitTexture.SetPixels32(Art.Lift(Art.HeadUnit(pressed, power, turn), lifts).Px);
+			unitTexture.SetPixels32(Art.SlantedHeadUnit(pressed, power, turn, lifts).Px);
 			unitTexture.Apply(false);
 		}
 
@@ -943,10 +941,7 @@ namespace HalfGripStereo
 				return;
 			}
 			lcdShown = key;
-			Art.Lcd(lcdPixels, top, bottom, on);
-			Art.Canvas flat = new Art.Canvas(Art.LcdWidth, Art.LcdHeight);
-			Array.Copy(lcdPixels, flat.Px, lcdPixels.Length);
-			lcdTexture.SetPixels32(Art.Lift(flat, lcdLifts).Px);
+			lcdTexture.SetPixels32(Art.LcdSlanted(top, bottom, on, lcdLifts).Px);
 			lcdTexture.Apply(false);
 		}
 

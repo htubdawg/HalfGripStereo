@@ -222,7 +222,8 @@ namespace HalfGripStereo
 		/// is drawn pushed in, <paramref name="power"/> lights the power key's red light, <paramref name="knobTurn"/> (0 to 1) turns the
 		/// volume knob's mark from 7 o'clock to 5 o'clock.
 		/// </summary>
-		internal static Canvas HeadUnit(Part? pressed, bool power, float knobTurn)
+		/// <remarks>With <paramref name="pieces"/> false, only the casing: no knob, keys or badge (see <see cref="SlantedHeadUnit"/>).</remarks>
+		internal static Canvas HeadUnit(Part? pressed, bool power, float knobTurn, bool pieces = true)
 		{
 			int w = UnitWidth, h = UnitHeight;
 			Canvas c = new Canvas(w, h);
@@ -236,12 +237,15 @@ namespace HalfGripStereo
 			// The CD slot across the top, with a highlight under its lip, and the eject key at its end.
 			c.Rect(20, 23, 53, 23, Slot);
 			c.Rect(20, 22, 53, 22, BodyTop);
-			Key3(c, Place(Part.Eject), pressed == Part.Eject);
-			RectInt e = Place(Part.Eject);
-			int ex = e.x + 1, ey = e.y + (pressed == Part.Eject ? 0 : 1);
-			c.Set(ex + 1, ey + 2, KeySign);
-			c.Rect(ex, ey + 1, ex + 2, ey + 1, KeySign);
-			c.Rect(ex, ey, ex + 2, ey, KeySign);
+			if (pieces)
+			{
+				Key3(c, Place(Part.Eject), pressed == Part.Eject);
+				RectInt e = Place(Part.Eject);
+				int ex = e.x + 1, ey = e.y + (pressed == Part.Eject ? 0 : 1);
+				c.Set(ex + 1, ey + 2, KeySign);
+				c.Rect(ex, ey + 1, ex + 2, ey + 1, KeySign);
+				c.Rect(ex, ey, ex + 2, ey, KeySign);
+			}
 
 			// The display's chrome frame; the window inside it is left dark, the display sprite covers it.
 			RectInt l = LcdWindow;
@@ -250,6 +254,10 @@ namespace HalfGripStereo
 			c.Rect(l.xMax + 1, l.y - 1, l.xMax + 1, l.yMax + 1, Chrome);
 			c.Rect(l.x - 1, l.y - 1, l.xMax, l.yMax, Outline);
 			c.Rect(l.x, l.y, l.xMax - 1, l.yMax - 1, new Color32(20, 12, 6, 255));
+			if (!pieces)
+			{
+				return c;
+			}
 
 			// The volume knob: a chrome rim, a dark groove, a knurled face, a white mark that turns with the volume.
 			RectInt k = Place(Part.Knob);
@@ -325,6 +333,20 @@ namespace HalfGripStereo
 			c.Rect(56, 9, 62, 9, ChromeDark);
 			return c;
 		}
+
+		/// <summary>
+		/// The boxes that stay upright when the unit is slanted, each lifted as a whole: the knob (with its ticks), the keys, the eject
+		/// key and the badge. Sheared column by column they broke apart (owner's test of 0.2.0: "looks pretty bad").
+		/// </summary>
+		internal static readonly RectInt[] Pieces =
+		{
+			new RectInt(1, 3, 18, 19), Place(Part.Power), Place(Part.Prev), Place(Part.Play), Place(Part.Next), Place(Part.Eject),
+			new RectInt(56, 9, 7, 7),
+		};
+
+		/// <summary>The head unit along the dash: the casing slanted column by column, the knob, keys and badge upright on it.</summary>
+		internal static Canvas SlantedHeadUnit(Part? pressed, bool power, float knobTurn, int[] lift) =>
+			LiftRigid(HeadUnit(pressed, power, knobTurn, false), HeadUnit(pressed, power, knobTurn), lift, Pieces);
 
 		/// <summary>A key: a raised block with a light top edge and a dark bottom edge, or pushed in, flat and darker.</summary>
 		private static void Key3(Canvas c, RectInt r, bool down)
@@ -405,6 +427,46 @@ namespace HalfGripStereo
 			System.Array.Copy(c.Px, into, into.Length);
 		}
 
+		/// <summary>
+		/// The display along the dash: the glass slanted column by column (<paramref name="lift"/>, in display pixels), each letter upright,
+		/// lifted as a whole by the lift under its middle, so letters never break.
+		/// </summary>
+		internal static Canvas LcdSlanted(string top, string bottom, bool on, int[] lift)
+		{
+			int w = LcdWidth, h = LcdHeight;
+			Canvas full = new Canvas(w, h);
+			Lcd(full.Px, top, bottom, on);
+			Canvas glass = new Canvas(w, h);
+			glass.Rect(0, 0, w - 1, h - 1, LcdGlass);
+			int cols = LcdColumns;
+			int x0 = (w - cols * Advance + 1) / 2;
+			List<RectInt> letters = new List<RectInt>();
+			foreach (int y in new[] { h - 2 - GlyphHeight, 3 })
+			{
+				for (int i = 0; i < cols; i++)
+				{
+					letters.Add(new RectInt(x0 + i * Advance, y, GlyphWidth, GlyphHeight));
+				}
+			}
+			// The glass meets the casing's window in casing pixels (two display pixels a step); the letters rise a display pixel at a
+			// time along the same line (a straight fit to the glass's steps), so a word never jumps two pixels in its middle.
+			double sx = 0, sy = 0, sxx = 0, sxy = 0;
+			for (int x = 0; x < w; x++)
+			{
+				sx += x;
+				sy += lift[x];
+				sxx += (double)x * x;
+				sxy += (double)x * lift[x];
+			}
+			double a = (w * sxy - sx * sy) / System.Math.Max(1e-9, w * sxx - sx * sx), b = (sy - a * sx) / w;
+			int[] fine = new int[w];
+			for (int x = 0; x < w; x++)
+			{
+				fine[x] = Mathf.Clamp((int)System.Math.Round(a * x + b), lift[x] - 1, lift[x] + 1);
+			}
+			return LiftRigid(glass, full, lift, letters, fine);
+		}
+
 		private static string Fit(string s, int n) => s == null ? "" : s.Length > n ? s.Substring(0, n) : s;
 
 		// ---------------------------------------------------------------------------------------------------------------------------
@@ -445,6 +507,34 @@ namespace HalfGripStereo
 				for (int y = 0; y < src.H; y++)
 				{
 					c.Px[(y + lift[x]) * c.W + x] = src.Px[y * src.W + x];
+				}
+			}
+			return c;
+		}
+
+		/// <summary>
+		/// <paramref name="flat"/> slanted column by column, with each box of <paramref name="full"/> laid over it upright, lifted as a
+		/// whole by the lift under the box's middle. <paramref name="flat"/> is the picture without what the boxes hold, so nothing of
+		/// theirs is left behind sheared.
+		/// </summary>
+		/// <remarks><paramref name="boxLift"/>, if given, lifts the boxes instead of <paramref name="lift"/>.</remarks>
+		internal static Canvas LiftRigid(Canvas flat, Canvas full, int[] lift, IEnumerable<RectInt> boxes, int[] boxLift = null)
+		{
+			Canvas c = Lift(flat, lift);
+			boxLift ??= lift;
+			foreach (RectInt b in boxes)
+			{
+				int up = boxLift[Mathf.Clamp(b.x + b.width / 2, 0, boxLift.Length - 1)];
+				for (int y = b.y; y < b.yMax; y++)
+				{
+					for (int x = b.x; x < b.xMax; x++)
+					{
+						Color32 px = full.Get(x, y);
+						if (px.a > 0)
+						{
+							c.Set(x, y + up, px);
+						}
+					}
 				}
 			}
 			return c;
