@@ -133,7 +133,7 @@ namespace HalfGripStereo
 		}
 
 		/// <summary>The settings the stereo was last built from.</summary>
-		private static string Settings() => string.Join("|", Mod.UnitX.Value, Mod.UnitY.Value, Mod.Perspective.Value, Mod.VisorX.Value, Mod.VisorY.Value, Mod.ShowVisor.Value, Mod.LitParts.Value);
+		private static string Settings() => string.Join("|", Mod.UnitX.Value, Mod.UnitY.Value, Mod.Lean.Value, Mod.VisorX.Value, Mod.VisorY.Value, Mod.ShowVisor.Value, Mod.LitParts.Value);
 
 		/// <summary>
 		/// The cockpit's pixel size in its own units: the middle value over every sprite showing in it (one sprite is not enough: some are
@@ -222,17 +222,17 @@ namespace HalfGripStereo
 			Materials(wheel);
 			toward = Toward(cam);
 
-			// The head unit: its right edge a little clear of the rim, its middle a little above the wheel's. It is drawn on its face,
-			// whose lines run to the cockpit camera's vanishing point (the point straight ahead of the camera, in the wheel's plane).
+			// The head unit: its right edge a little clear of the rim, its middle a little above the wheel's. Square on, its sides leaning
+			// toward the cockpit camera's vanishing point (the point straight ahead of the camera, in the wheel's plane; see Face).
 			// Its object is at the face canvas's bottom left, and everything on it is placed in the canvas's pixels.
 			int h = Art.UnitHeight;
 			face = new Face(Vector2.zero, 0f);
 			Vector3 corner = Vector3.zero;
 			for (int pass = 0; pass < 2; pass++)
 			{
-				// Twice: the face's width (from the perspective) sets where its left end is, which sets the perspective.
+				// Twice: the face's width (from the right side's lean) sets where its left end is, which sets the lean.
 				corner = new Vector3(centre.x - radius - WheelGap - face.W * texel + Mod.UnitX.Value, centre.y + 0.5f - h * 0.5f * texel + Mod.UnitY.Value, centre.z);
-				face = new Face(Vanish(corner), Mod.Perspective.Value);
+				face = new Face(Vanish(corner), Mod.Lean.Value);
 			}
 			Vector3 unitAt = corner + new Vector3(0f, face.Low * texel, 0f);
 			unit = Part("StereoUnit", transform, unitAt);
@@ -276,7 +276,7 @@ namespace HalfGripStereo
 			{
 				sticking = -1;
 			}
-			Mod.Info("Stereo: head unit at " + unitAt.ToString("0.00") + " (" + (w * texel).ToString("0.00") + " units wide, " + face.Rows + " px tall, vanishing point " + Vanish(corner).ToString("0") + " px from its corner, perspective " + Mod.Perspective.Value.ToString("0.00") + "), wheel at " + centre.ToString("0.00") + " radius " + radius.ToString("0.00") + ", sorting " + sortingLayer + "/" + sortingOrder + ", hand sorting " + HandSorting() + ", lit '" + (lit != null ? lit.shader.name : "none") + "', display '" + (unlit != null ? unlit.shader.name : "none") + "', camera '" + (cam != null ? cam.name : "none") + "' toward " + toward);
+			Mod.Info("Stereo: head unit at " + unitAt.ToString("0.00") + " (" + (w * texel).ToString("0.00") + " units wide, " + face.Rows + " px tall, vanishing point " + Vanish(corner).ToString("0") + " px from its corner, sides leaning " + Mod.Lean.Value.ToString("0.0") + " px), wheel at " + centre.ToString("0.00") + " radius " + radius.ToString("0.00") + ", sorting " + sortingLayer + "/" + sortingOrder + ", hand sorting " + HandSorting() + ", lit '" + (lit != null ? lit.shader.name : "none") + "', display '" + (unlit != null ? unlit.shader.name : "none") + "', camera '" + (cam != null ? cam.name : "none") + "' toward " + toward);
 		}
 
 		/// <summary>

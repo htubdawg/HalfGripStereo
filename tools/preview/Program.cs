@@ -24,11 +24,13 @@ namespace HalfGripStereo
 			Png.Save(Path.Combine(dir, "unit.png"), Half(unit), Art.UnitWidth, Art.UnitHeight, 1);
 			Png.Save(Path.Combine(dir, "unit-4x.png"), unit.Px, unit.W, unit.H, 2);
 
-			// As in the cockpit: on its face, in the dash's perspective (the vanishing point as in the owner's 0.2.1 screenshot, in cockpit
-			// pixels from the face's bottom left; the optional second and third arguments), with and without a disc half out of the slot.
+			// As in the cockpit: square on, its sides leaning toward the vanishing point (as in the owner's 0.2.1 screenshot, in cockpit
+			// pixels from the face's bottom left; the optional second and third arguments) by Stereo.Lean (the fourth, default 3), with
+			// and without a disc half out of the slot.
 			float vx = args.Length > 2 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 201f;
 			float vy = args.Length > 2 ? float.Parse(args[2], System.Globalization.CultureInfo.InvariantCulture) : 137f;
-			Face face = new Face(new Vector2(vx, vy), 1f);
+			float lean = args.Length > 3 ? float.Parse(args[3], System.Globalization.CultureInfo.InvariantCulture) : 3f;
+			Face face = new Face(new Vector2(vx, vy), lean);
 			Art.Canvas onFace = OnFace(face, "CD2 ▶ 1:23", "NEON 2", false);
 			Png.Save(Path.Combine(dir, "unit-face-4x.png"), onFace.Px, onFace.W, onFace.H, 2);
 			Art.Canvas withDisc = OnFace(face, "CD2 ▶ 1:23", "NEON 2", true);

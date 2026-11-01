@@ -4,56 +4,58 @@ using UnityEngine;
 namespace HalfGripStereo
 {
 	/// <summary>
-	/// The head unit's face as the cockpit camera sees it. The dash beside the wheel is drawn in perspective: its edges run forward,
-	/// toward the vanishing point in the middle of the view (the owner's test of 0.2.1, with the lines drawn on: "you have the
-	/// perspective completely opposite"). So the face's left end is the near one, tallest; its top and bottom edges run toward the
-	/// vanishing point, closing in to the right; and the face is narrower than face on.
+	/// The head unit's face as the cockpit camera sees it, after the owner's own mock-up (after 0.2.2): the face is square on to the
+	/// driver like the gauges, the GPS and the gear box, its top and bottom level and every detail upright and unchanged (the 0.1.0
+	/// look). The dash's face below its lip leans back a little, so the unit's two sides run up toward the vanishing point in the
+	/// middle of the view: the left side leans right by <c>Stereo.Lean</c> cockpit pixels over the face's height, the right side
+	/// less, in proportion to how much nearer the vanishing point it is. Nothing else moves.
 	///
-	/// The flat art (<see cref="Art.HeadUnit"/>, 64x28) gives the layout. The plain parts (outline, lips, slot, display frame, keys) are
-	/// drawn straight into the face column by column, each line kept a pixel thick wherever the face is shallower; the knob is an
-	/// ellipse; the key signs, the badge and the display's letters stay upright and whole, lifted to their place. No picture is
-	/// resampled, so nothing breaks apart (0.2.0's sheared face did).
+	/// 0.2.0 to 0.2.2 tipped the whole face along the dash's forward lines (sheared, then converging on the vanishing point); the owner
+	/// found every one of them wrong. Only the outline follows the perspective now.
 	///
-	/// Coordinates: x in face pixels from the left edge, rows from the canvas bottom; (u, v) a point of the flat art.
+	/// Coordinates: x in face pixels from the canvas's left edge, rows from its bottom; a flat point (u, v) is at (u, v).
 	/// </summary>
 	internal sealed class Face
 	{
-		/// <summary>The face's width in cockpit pixels, and the canvas's height.</summary>
+		/// <summary>The canvas's width in cockpit pixels (the flat 64 and the right side's lean), and its height.</summary>
 		internal readonly int W;
 		internal readonly int Rows;
-		/// <summary>The canvas's bottom row, in cockpit pixels above the face's bottom left corner (negative when the face dips).</summary>
+		/// <summary>The canvas's bottom row against the face's bottom left corner: always 0 (the face does not dip).</summary>
 		internal readonly int Low;
-		private readonly float bottomSlope;
-		private readonly float topSlope;
+		/// <summary>How far, in pixels, the left and right sides lean right at the top.</summary>
+		private readonly float leanLeft;
+		private readonly float leanRight;
 
 		/// <param name="vanish">The vanishing point, in cockpit pixels from the face's bottom left corner.</param>
-		/// <param name="amount">0 face on (the 0.1.0 look), 1 as the camera sees it.</param>
-		internal Face(Vector2 vanish, float amount)
+		/// <param name="lean">How far the left side leans right over the face's height, in cockpit pixels (0: square, the 0.1.0 look).</param>
+		internal Face(Vector2 vanish, float lean)
 		{
-			amount = Mathf.Clamp01(amount);
-			W = Mathf.RoundToInt(Art.UnitWidth * (1f - 0.3f * amount));
-			// A vanishing point on or left of the face would turn it inside out: keep it well to the right.
-			float vx = Mathf.Max(vanish.x, W * 2f);
-			bottomSlope = vanish.y / vx * amount;
-			topSlope = (vanish.y - Art.UnitHeight) / vx * amount;
-			float lo = Mathf.Min(0f, bottomSlope * W);
-			float hi = Mathf.Max(Art.UnitHeight, Art.UnitHeight + topSlope * W);
-			Low = Mathf.FloorToInt(lo);
-			Rows = Mathf.CeilToInt(hi) - Low + 1;
+			leanLeft = Mathf.Clamp(lean, 0f, 12f);
+			// Each side points at the vanishing point, so it leans in proportion to its distance from it across; the right side is
+			// nearer. A vanishing point left of the right side would lean it the other way: keep it upright then.
+			float vx = Mathf.Max(vanish.x, 1f);
+			leanRight = leanLeft * Mathf.Clamp01((vx - Art.UnitWidth) / vx);
+			W = Art.UnitWidth + Mathf.CeilToInt(leanRight);
+			Rows = Art.UnitHeight;
+			Low = 0;
+		}
+
+		/// <summary>The casing's leftmost and rightmost columns in row y.</summary>
+		internal void Edges(int y, out int left, out int right)
+		{
+			float t = (y + 0.5f) / Art.UnitHeight;
+			left = Mathf.RoundToInt(leanLeft * t);
+			right = Art.UnitWidth - 1 + Mathf.RoundToInt(leanRight * t);
 		}
 
 		/// <summary>The face pixel column of flat column <paramref name="u"/> (a column edge).</summary>
-		internal float X(float u) => u * W / Art.UnitWidth;
+		internal float X(float u) => u;
 
 		/// <summary>The flat column at face x.</summary>
-		internal float U(float x) => x * Art.UnitWidth / W;
+		internal float U(float x) => x;
 
 		/// <summary>Height above the canvas bottom of flat row <paramref name="v"/> at face x (continuous).</summary>
-		internal float Y(float x, float v)
-		{
-			float b = bottomSlope * x, t = Art.UnitHeight + topSlope * x;
-			return b + (t - b) * v / Art.UnitHeight - Low;
-		}
+		internal float Y(float x, float v) => v;
 
 		/// <summary>A flat point's place on the canvas (continuous).</summary>
 		internal Vector2 Map(float u, float v)
@@ -120,13 +122,15 @@ namespace HalfGripStereo
 		/// <summary>The knob's middle and radius on the flat art.</summary>
 		private static readonly Vector2 KnobAt = new Vector2(10.5f, 12.5f);
 		private const float KnobRadius = 7.4f;
+		/// <summary>The knob is narrower across than up (the owner's mock-up), which also keeps it clear of the leaning left side.</summary>
+		private const float KnobNarrow = 0.82f;
 
 		/// <summary>The knob's middle on the canvas and its radii (narrow across, the face being turned away).</summary>
 		internal void Knob(out Vector2 centre, out float rx, out float ry)
 		{
 			centre = Map(KnobAt.x, KnobAt.y);
-			rx = KnobRadius * W / Art.UnitWidth;
-			ry = KnobRadius * Squeeze(centre.x);
+			rx = KnobRadius * KnobNarrow;
+			ry = KnobRadius;
 		}
 
 		/// <summary>The middle of a part on the canvas and the size of its box, for its click target.</summary>
@@ -154,21 +158,31 @@ namespace HalfGripStereo
 		{
 			Art.Canvas c = new Art.Canvas(W, Rows);
 			int h = Art.UnitHeight;
-			for (int x = 0; x < W; x++)
+			// Row by row between the two leaning sides: the outline round it, a lighter lip along the top (light from above), a darker
+			// row along the bottom.
+			for (int y = 0; y < h; y++)
 			{
-				Span(x, 0, h, 0, out int y0, out int y1);
-				c.Rect(x, y0, x, y1, Outline);
-				if (x == 0 || x == W - 1)
+				Edges(y, out int l, out int r);
+				c.Rect(l, y, r, y, Outline);
+				if (y == 0 || y == h - 1)
 				{
 					continue;
 				}
-				c.Rect(x, y0 + 1, x, y1 - 1, Body);
-				// A lighter lip along the top (light from above), a darker one along the bottom.
-				Span(x, h - 3, h, 0, out int ly0, out int _);
-				c.Rect(x, Mathf.Max(y0 + 2, ly0), x, y1 - 1, BodyTop);
-				c.Set(x, y0 + 1, BodyLow);
+				c.Rect(l + 1, y, r - 1, y, y >= h - 3 ? BodyTop : y == 1 ? BodyLow : Body);
+				// Where a side steps right going up, the outline covers the step so it stays joined: on the left under the row above's
+				// edge, on the right over the row below's.
+				Edges(y + 1, out int nl, out int _);
+				for (int x = l + 1; x < nl; x++)
+				{
+					c.Set(x, y, Outline);
+				}
+				Edges(y - 1, out int _, out int pr);
+				for (int x = pr + 1; x < r; x++)
+				{
+					c.Set(x, y, Outline);
+				}
 			}
-			c.Speckle(1, 0, W - 2, Rows - 1, 5, 11);
+			c.Speckle(1, 1, W - 2, Rows - 2, 5, 11);
 
 			// The CD slot, with a highlight under its lip.
 			Columns(Art.SlotLeft, Art.SlotRight + 1, out int sx0, out int sx1);
@@ -230,8 +244,8 @@ namespace HalfGripStereo
 			}
 
 			// The gold CD badge, upright, at the far end, on a chrome line that follows the face.
-			int bx = fx1 + Mathf.Max(2, (W - 1 - fx1 - 7) / 2);
-			if (bx + 7 <= W - 1)
+			int bx = fx1 + Mathf.Max(2, (Art.UnitWidth - 1 - fx1 - 7) / 2);
+			if (bx + 7 <= Art.UnitWidth - 1)
 			{
 				int by = Mathf.RoundToInt(Y(bx + 3.5f, 11f));
 				Art.Text(c, "CD", bx, by, Badge);
