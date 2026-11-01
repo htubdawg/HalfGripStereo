@@ -26,7 +26,7 @@ namespace HalfGripStereo
 		internal static ConfigEntry<float> Loudness;
 		internal static ConfigEntry<float> UnitX;
 		internal static ConfigEntry<float> UnitY;
-		internal static ConfigEntry<float> Slant;
+		internal static ConfigEntry<float> Perspective;
 		internal static ConfigEntry<bool> ShowVisor;
 		internal static ConfigEntry<float> VisorX;
 		internal static ConfigEntry<float> VisorY;
@@ -81,18 +81,14 @@ namespace HalfGripStereo
 
 		/// <summary>
 		/// BepInEx keeps a saved value over a new default, so a changed default is moved on here, once, and only if it was never changed.
-		/// 2 (0.2.1): Stereo.Slant 0.33 → 0.25 (0.33 was steeper than the dash in the owner's screenshot of 0.2.0).
+		/// 2 (0.2.1): nothing left to move (0.2.1 moved Stereo.Slant 0.33 to 0.25; 0.2.2 replaced Slant with Stereo.Perspective, a new key,
+		/// the angle now coming from the cockpit camera).
 		/// </summary>
 		private static void Migrate()
 		{
 			if (ConfigVersion.Value >= CurrentConfig)
 			{
 				return;
-			}
-			if (Mathf.Abs(Slant.Value - 0.33f) < 0.001f)
-			{
-				Slant.Value = 0.25f;
-				Info("Stereo: config moved on: Stereo.Slant 0.33 -> 0.25");
 			}
 			ConfigVersion.Value = CurrentConfig;
 		}
@@ -107,7 +103,7 @@ namespace HalfGripStereo
 			Loudness = ctx.Config.Bind("Music", "Loudness", 1f, new ConfigDescription("How loud the stereo is at full volume against the game's own music (1: as loud).", new AcceptableValueRange<float>(0.1f, 1f)));
 			UnitX = ctx.Config.Bind("Stereo", "OffsetX", 0f, "Moves the stereo sideways from its place left of the steering wheel (cockpit units, right is positive; a cockpit pixel is about 0.05). Takes effect as soon as the file is saved.");
 			UnitY = ctx.Config.Bind("Stereo", "OffsetY", 0f, "Moves the stereo up or down (cockpit units, up is positive). Takes effect as soon as the file is saved.");
-			Slant = ctx.Config.Bind("Stereo", "Slant", 0.25f, new ConfigDescription("How much the stereo leans to follow the dash's top edge: cockpit pixels up per pixel across (0 face on, 0.5 one up for every two across; negative leans the other way). Takes effect as soon as the file is saved.", new AcceptableValueRange<float>(-1f, 1f)));
+			Perspective = ctx.Config.Bind("Stereo", "Perspective", 1f, new ConfigDescription("How far the stereo is drawn in the dash's perspective: 1 as the cockpit camera sees the dash (its lines running to the middle of the view, the near end taller), 0 face on. Takes effect as soon as the file is saved.", new AcceptableValueRange<float>(0f, 1f)));
 			ShowVisor = ctx.Config.Bind("Visor", "Shown", true, "Show the CD wallet on the sun visor. Off, the stereo's next and previous keys still change disc.");
 			VisorX = ctx.Config.Bind("Visor", "ScreenX", 0.3f, new ConfigDescription("Where the CD wallet's middle is across the screen (0 left edge, 1 right edge). Takes effect as soon as the file is saved.", new AcceptableValueRange<float>(0f, 1f)));
 			VisorY = ctx.Config.Bind("Visor", "ScreenY", 0.87f, new ConfigDescription("Where the CD wallet's middle is up the screen (0 bottom, 1 top). Takes effect as soon as the file is saved.", new AcceptableValueRange<float>(0f, 1f)));

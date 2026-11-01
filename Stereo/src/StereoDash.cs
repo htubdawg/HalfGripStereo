@@ -8,7 +8,7 @@ namespace HalfGripStereo
 	/// The stereo in the cockpit, put on the cockpit's root (CarInterior) by <see cref="Fitter"/>. It builds two things there:
 	///
 	/// - the **head unit**, standing just left of the steering wheel (sized from the wheel's own sprite, so it follows the wheel), slanted
-	///   along the dash's top edge (<see cref="Mod.Slant"/>: each column lifted by whole pixels, see <see cref="Art.Lift"/>), with its
+	///   in the dash's perspective (<see cref="Face"/>: its lines run to the cockpit camera's vanishing point, as the dash's do), with its
 	///   display as a glowing sprite of its own, a click target on each key, and the volume knob grabbed and turned by the hand;
 	/// - the **CD wallet on the sun visor**, at the top left of the view (placed through the cockpit camera, at the wheel's depth), with a
 	///   crescent of each disc showing past its sleeve.
@@ -40,9 +40,6 @@ namespace HalfGripStereo
 		private const float SlideSpeed = 110f;
 		/// <summary>A falling disc out of sight for this long, or falling this long at all, is back in its sleeve.</summary>
 		private const float FallTime = 4f;
-		/// <summary>The disc's bottom row (in the unit's rows, before the slant) when it is all the way in, and when it sticks out after an eject.</summary>
-		private const int DiscIn = Art.SlotRow + 1 - Art.DiscSize;
-		private const int DiscOut = Art.SlotRow + 1 - 20;
 
 		/// <summary>The disc sticking out of the slot (ejected, not yet taken), or -1. Kept between races as the deck's state is.</summary>
 		private static int sticking = -1;
@@ -64,16 +61,13 @@ namespace HalfGripStereo
 		private readonly List<UnityEngine.Object> owned = new List<UnityEngine.Object>();
 		private GameObject unit;
 		private GameObject visor;
-		/// <summary>Each column's lift, the slant (see <see cref="Art.Lifts"/>), and the casing's height with it.</summary>
-		private int[] lifts = new int[Art.UnitWidth];
-		private int unitRows = Art.UnitHeight;
+		/// <summary>The head unit's face in the dash's perspective: where everything on it is drawn and placed.</summary>
+		private Face face = new Face(new Vector2(201f, 137f), 1f);
 		/// <summary>The visor's bottom left and size, in the head unit's space.</summary>
 		private Rect visorBox;
 		private Texture2D unitTexture;
 		private Texture2D visorTexture;
 		private Texture2D lcdTexture;
-		private int[] lcdLifts;
-		private int lcdRows;
 		private string lcdShown;
 		private Art.Part? pressed;
 		private float pressedAt;
@@ -139,7 +133,7 @@ namespace HalfGripStereo
 		}
 
 		/// <summary>The settings the stereo was last built from.</summary>
-		private static string Settings() => string.Join("|", Mod.UnitX.Value, Mod.UnitY.Value, Mod.Slant.Value, Mod.VisorX.Value, Mod.VisorY.Value, Mod.ShowVisor.Value, Mod.LitParts.Value);
+		private static string Settings() => string.Join("|", Mod.UnitX.Value, Mod.UnitY.Value, Mod.Perspective.Value, Mod.VisorX.Value, Mod.VisorY.Value, Mod.ShowVisor.Value, Mod.LitParts.Value);
 
 		/// <summary>
 		/// The cockpit's pixel size in its own units: the middle value over every sprite showing in it (one sprite is not enough: some are
@@ -228,47 +222,43 @@ namespace HalfGripStereo
 			Materials(wheel);
 			toward = Toward(cam);
 
-			// The head unit: its right edge a little clear of the rim, its middle a little above the wheel's. Its object is at the
-			// casing's bottom left (before the slant), and everything on it is placed in its pixels.
-			int w = Art.UnitWidth, h = Art.UnitHeight;
-			lifts = Art.Lifts(w, Mod.Slant.Value);
-			Vector3 unitAt = new Vector3(centre.x - radius - WheelGap - w * texel * 0.5f + Mod.UnitX.Value, centre.y + 0.5f + Mod.UnitY.Value, centre.z);
-			unit = Part("StereoUnit", transform, unitAt - new Vector3(w * 0.5f, h * 0.5f, 0f) * texel);
-			unitRows = h + Max(lifts);
-			unitTexture = MakeTexture(w, unitRows, "StereoUnit");
+			// The head unit: its right edge a little clear of the rim, its middle a little above the wheel's. It is drawn on its face,
+			// whose lines run to the cockpit camera's vanishing point (the point straight ahead of the camera, in the wheel's plane).
+			// Its object is at the face canvas's bottom left, and everything on it is placed in the canvas's pixels.
+			int h = Art.UnitHeight;
+			face = new Face(Vector2.zero, 0f);
+			Vector3 corner = Vector3.zero;
+			for (int pass = 0; pass < 2; pass++)
+			{
+				// Twice: the face's width (from the perspective) sets where its left end is, which sets the perspective.
+				corner = new Vector3(centre.x - radius - WheelGap - face.W * texel + Mod.UnitX.Value, centre.y + 0.5f - h * 0.5f * texel + Mod.UnitY.Value, centre.z);
+				face = new Face(Vanish(corner), Mod.Perspective.Value);
+			}
+			Vector3 unitAt = corner + new Vector3(0f, face.Low * texel, 0f);
+			unit = Part("StereoUnit", transform, unitAt);
+			int w = face.W;
+			unitTexture = MakeTexture(w, face.Rows, "StereoUnit");
 			Sprite(unit, "Casing", unitTexture, Vector3.zero, lit, 0);
 
-			// The display, lifted in step with the casing (whole casing pixels, so its edges meet the window's).
-			RectInt win = Art.LcdWindow;
-			int d = Art.LcdDetail;
-			lcdLifts = new int[Art.LcdWidth];
-			int lowest = int.MaxValue;
-			for (int x = 0; x < lcdLifts.Length; x++)
-			{
-				lcdLifts[x] = d * lifts[win.x + x / d];
-				lowest = Mathf.Min(lowest, lcdLifts[x]);
-			}
-			for (int x = 0; x < lcdLifts.Length; x++)
-			{
-				lcdLifts[x] -= lowest;
-			}
-			lcdRows = Art.LcdHeight + Max(lcdLifts);
-			lcdTexture = MakeTexture(Art.LcdWidth, lcdRows, "StereoLcd");
+			// The display, its glass meeting the frame's window in whole cockpit pixels.
+			face.DisplaySize(out int lw, out int lh);
+			face.DisplayCorner(out int lx, out int ly);
+			lcdTexture = MakeTexture(lw, lh, "StereoLcd");
 			lcdShown = null;
-			Sprite(unit, "Display", lcdTexture, new Vector3(win.x * texel, (win.y + lowest / d) * texel, toward * Lift), unlit, 1);
+			Sprite(unit, "Display", lcdTexture, new Vector3(lx * texel, ly * texel, toward * Lift), unlit, 1);
 
 			// Behind the keys, the whole unit: a right click anywhere on it ejects.
-			Touch(unit, "Unit", new Vector3(w * 0.5f, unitRows * 0.5f, 0f) * texel, w * texel, unitRows * texel, StereoButton.SortingLayer - 1, null, Eject);
+			Touch(unit, "Unit", new Vector3(w * 0.5f, face.Rows * 0.5f, 0f) * texel, w * texel, face.Rows * texel, StereoButton.SortingLayer - 1, null, Eject);
 			foreach (Art.Part p in Art.Parts)
 			{
-				RectInt r = Art.Place(p);
+				Rect r = face.Target(p);
 				Art.Part part = p;
 				if (p == Art.Part.Knob)
 				{
 					Knob(r);
 					continue;
 				}
-				Touch(unit, p.ToString(), UnitLocal(r.center), r.width * texel, r.height * texel, StereoButton.SortingLayer, () => Press(part), Eject);
+				Touch(unit, p.ToString(), new Vector3(r.center.x, r.center.y, 0f) * texel, r.width * texel, r.height * texel, StereoButton.SortingLayer, () => Press(part), Eject);
 			}
 			unitShown = null;
 			DrawUnit();
@@ -280,23 +270,37 @@ namespace HalfGripStereo
 			if (sticking >= 0 && sticking < Discs.All.Count && (deck == null || deck.DiscIndex < 0))
 			{
 				Loose l = MakeLoose(sticking, Vector2.zero);
-				InSlot(l, DiscOut, false);
+				InSlot(l, face.DiscOutRow, false);
 			}
 			else
 			{
 				sticking = -1;
 			}
-			Mod.Info("Stereo: head unit at " + unitAt.ToString("0.00") + " (" + (w * texel).ToString("0.00") + " x " + (h * texel).ToString("0.00") + " units, slant " + Mod.Slant.Value.ToString("0.00") + "), wheel at " + centre.ToString("0.00") + " radius " + radius.ToString("0.00") + ", sorting " + sortingLayer + "/" + sortingOrder + ", hand sorting " + HandSorting() + ", lit '" + (lit != null ? lit.shader.name : "none") + "', display '" + (unlit != null ? unlit.shader.name : "none") + "', camera '" + (cam != null ? cam.name : "none") + "' toward " + toward);
+			Mod.Info("Stereo: head unit at " + unitAt.ToString("0.00") + " (" + (w * texel).ToString("0.00") + " units wide, " + face.Rows + " px tall, vanishing point " + Vanish(corner).ToString("0") + " px from its corner, perspective " + Mod.Perspective.Value.ToString("0.00") + "), wheel at " + centre.ToString("0.00") + " radius " + radius.ToString("0.00") + ", sorting " + sortingLayer + "/" + sortingOrder + ", hand sorting " + HandSorting() + ", lit '" + (lit != null ? lit.shader.name : "none") + "', display '" + (unlit != null ? unlit.shader.name : "none") + "', camera '" + (cam != null ? cam.name : "none") + "' toward " + toward);
 		}
 
-		private static int Max(int[] a)
+		/// <summary>
+		/// Where the cockpit camera's middle ray meets the wheel's plane, in cockpit pixels from <paramref name="corner"/>: the vanishing
+		/// point the dash's forward lines run to. Without a camera, the one measured in the owner's 0.2.1 screenshot.
+		/// </summary>
+		private Vector2 Vanish(Vector3 corner)
 		{
-			int m = 0;
-			foreach (int v in a)
+			if (cam != null)
 			{
-				m = Mathf.Max(m, v);
+				Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+				Vector3 o = interior.InverseTransformPoint(ray.origin);
+				Vector3 dir = interior.InverseTransformDirection(ray.direction);
+				if (Mathf.Abs(dir.z) > 1e-4f)
+				{
+					float k = (corner.z - o.z) / dir.z;
+					if (k > 0f)
+					{
+						Vector3 p = o + dir * k;
+						return new Vector2(p.x - corner.x, p.y - corner.y) / texel;
+					}
+				}
 			}
-			return m;
+			return new Vector2(201f, 137f);
 		}
 
 		/// <summary>The cockpit hand's sprites' sorting, for the log: a loose disc should draw under the hand.</summary>
@@ -316,20 +320,13 @@ namespace HalfGripStereo
 			return lo > hi ? "?" : lo + ".." + hi;
 		}
 
-		/// <summary>A point of the casing's art (pixels from its bottom left, before the slant) in the head unit's space.</summary>
-		private Vector3 UnitLocal(Vector2 px)
-		{
-			int col = Mathf.Clamp(Mathf.FloorToInt(px.x), 0, lifts.Length - 1);
-			return new Vector3(px.x * texel, (px.y + lifts[col]) * texel, 0f);
-		}
-
 		/// <summary>The volume knob: grabbed and turned round its middle (see <see cref="KnobGrab"/>); each step clicks.</summary>
-		private void Knob(RectInt r)
+		private void Knob(Rect r)
 		{
 			GameObject go = new GameObject("Knob");
 			go.layer = layer;
 			go.transform.SetParent(unit.transform, false);
-			go.transform.localPosition = UnitLocal(r.center) + new Vector3(0f, 0f, toward * TouchLift);
+			go.transform.localPosition = new Vector3(r.center.x * texel, r.center.y * texel, toward * TouchLift);
 			InteriorSquareCollider target = go.AddComponent<InteriorSquareCollider>();
 			target.width = r.width * texel;
 			target.height = r.height * texel;
@@ -339,7 +336,7 @@ namespace HalfGripStereo
 			KnobGrab knob = go.AddComponent<KnobGrab>();
 			knob.attachedCollider = target;
 			knob.keepPhysicalCursorClose = true;
-			knob.keepPhysicalCursorRange = r.width * texel;
+			knob.keepPhysicalCursorRange = Mathf.Max(r.width, r.height) * texel;
 			knob.Read = () => deck != null ? deck.VolumeTurn : 0.7f;
 			knob.Turned = t =>
 			{
@@ -597,8 +594,8 @@ namespace HalfGripStereo
 			deck.Eject();
 			Sounds.Disc(gameObject);
 			Loose l = MakeLoose(i, Vector2.zero);
-			InSlot(l, DiscIn, false);
-			l.RowTo = DiscOut;
+			InSlot(l, face.DiscInRow, false);
+			l.RowTo = face.DiscOutRow;
 			sticking = i;
 		}
 
@@ -708,7 +705,7 @@ namespace HalfGripStereo
 		{
 			Vector2 c = l.Grab.Centre;
 			float r = Art.DiscRadius * texel;
-			Rect stereo = new Rect(-r * 0.5f, -r, (Art.UnitWidth + 0f) * texel + r, unitRows * texel + 2f * r);
+			Rect stereo = new Rect(-r * 0.5f, -r, face.W * texel + r, face.Rows * texel + 2f * r);
 			if (stereo.Contains(c))
 			{
 				// Another disc sticking out of the slot goes back to the visor; the one playing comes out when this one is in.
@@ -717,9 +714,9 @@ namespace HalfGripStereo
 				{
 					Remove(other);
 				}
-				float row = c.y / texel - Art.DiscRadius - lifts[DiscColumn];
-				InSlot(l, Mathf.Clamp(row, DiscIn, Art.SlotRow + 1), true);
-				l.RowTo = DiscIn;
+				float row = c.y / texel - Art.DiscRadius;
+				InSlot(l, Mathf.Clamp(row, face.DiscInRow, face.DiscOutRow + 20), true);
+				l.RowTo = face.DiscInRow;
 				Sounds.Disc(gameObject);
 				Mod.Info("Stereo: disc " + (l.Grab.Index + 1) + " put in the slot");
 				return;
@@ -736,10 +733,7 @@ namespace HalfGripStereo
 			l.FellAt = Time.time;
 		}
 
-		/// <summary>The column of the casing under a disc's middle when it is in the slot.</summary>
-		private static int DiscColumn => Art.SlotDiscLeft + Art.DiscSize / 2;
-
-		/// <summary>The disc in the slot with its bottom at <paramref name="row"/> (unit rows, before the slant), going in if <paramref name="inserting"/>.</summary>
+		/// <summary>The disc in the slot with its bottom at canvas row <paramref name="row"/>, going in if <paramref name="inserting"/>.</summary>
 		private void InSlot(Loose l, float row, bool inserting)
 		{
 			l.Grab.State = DiscGrab.Mode.Slot;
@@ -751,8 +745,8 @@ namespace HalfGripStereo
 
 		private void PlaceInSlot(Loose l)
 		{
-			int bottom = Mathf.RoundToInt(l.Row) + lifts[DiscColumn];
-			l.Grab.Centre = new Vector2((Art.SlotDiscLeft + Art.DiscRadius) * texel, (bottom + Art.DiscRadius) * texel);
+			int bottom = Mathf.RoundToInt(l.Row);
+			l.Grab.Centre = new Vector2((face.SlotDiscLeft + Art.DiscRadius) * texel, (bottom + Art.DiscRadius) * texel);
 			Draw(l);
 		}
 
@@ -761,24 +755,25 @@ namespace HalfGripStereo
 		{
 			int[] clip = null;
 			int shows = Art.DiscSize;
+			int width = Art.DiscSize;
 			if (l.Grab.State == DiscGrab.Mode.Slot)
 			{
-				int bottom = Mathf.RoundToInt(l.Row) + lifts[DiscColumn];
-				clip = new int[Art.DiscSize];
+				// In the slot it is seen at the face's angle (an oval), and the part inside the slot is cut away.
+				clip = face.SlotClip(Mathf.RoundToInt(l.Row));
+				width = face.SlotDiscWidth;
 				shows = 0;
-				for (int x = 0; x < clip.Length; x++)
+				for (int x = (Art.DiscSize - width) / 2; x < (Art.DiscSize + width) / 2; x++)
 				{
-					clip[x] = Art.SlotRow + 1 + lifts[Art.SlotDiscLeft + x] - bottom;
 					shows = Mathf.Max(shows, Art.DiscSize - clip[x]);
 				}
 				shows = Mathf.Clamp(shows, 0, Art.DiscSize);
 			}
-			string key = clip == null ? "whole" : string.Join(",", clip);
+			string key = clip == null ? "whole" : width + ":" + string.Join(",", clip);
 			if (key != l.Shown)
 			{
 				l.Shown = key;
 				Disc d = l.Grab.Index < Discs.All.Count ? Discs.All[l.Grab.Index] : null;
-				Art.Canvas c = Art.LooseDisc(Art.LabelFor(d == null || d.Mix ? "MIX" : d.Title), d != null && d.Mix ? "MY" : (l.Grab.Index + 1).ToString(), clip);
+				Art.Canvas c = Art.LooseDisc(Art.LabelFor(d == null || d.Mix ? "MIX" : d.Title), d != null && d.Mix ? "MY" : (l.Grab.Index + 1).ToString(), clip, width);
 				l.Texture.SetPixels32(c.Px);
 				l.Texture.Apply(false);
 			}
@@ -891,7 +886,7 @@ namespace HalfGripStereo
 				return;
 			}
 			unitShown = key;
-			unitTexture.SetPixels32(Art.SlantedHeadUnit(pressed, power, turn, lifts).Px);
+			unitTexture.SetPixels32(face.Casing(pressed, power, turn).Px);
 			unitTexture.Apply(false);
 		}
 
@@ -941,14 +936,14 @@ namespace HalfGripStereo
 				return;
 			}
 			lcdShown = key;
-			lcdTexture.SetPixels32(Art.LcdSlanted(top, bottom, on, lcdLifts).Px);
+			lcdTexture.SetPixels32(face.Display(top, bottom, on).Px);
 			lcdTexture.Apply(false);
 		}
 
 		/// <summary>A name too long for the display runs along it, with a gap before it comes round again.</summary>
-		private static string Scroll(string text)
+		private string Scroll(string text)
 		{
-			int cols = Art.LcdColumns;
+			int cols = face.DisplayColumns;
 			if (text.Length <= cols)
 			{
 				return text;

@@ -106,7 +106,6 @@ namespace HalfGripStereo
 		internal Mode State = Mode.Slot;
 		internal Action<DiscGrab> Dropped;
 		internal Action<DiscGrab> Taken;
-		internal Action RightClicked;
 		/// <summary>Cockpit units per second squared, down the cockpit's plane.</summary>
 		internal float Gravity = 30f;
 
@@ -137,8 +136,6 @@ namespace HalfGripStereo
 			velocity *= directSpeedKeptOnRelease;
 			Dropped?.Invoke(this);
 		}
-
-		protected override void OnRightClick() => RightClicked?.Invoke();
 
 		protected override void StepPhysics(float dt) => StepDirect(dt);
 

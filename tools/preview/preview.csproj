@@ -13,7 +13,7 @@
     <Managed>$(Refs)/game/HalfGrip_Data/Managed</Managed>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(Src)/Art.cs;Program.cs;Png.cs" />
+    <Compile Include="$(Src)/Art.cs;$(Src)/Face.cs;Program.cs;Png.cs" />
     <Reference Include="$(Managed)/UnityEngine.CoreModule.dll" />
   </ItemGroup>
 </Project>

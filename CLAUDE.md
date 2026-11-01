@@ -38,10 +38,11 @@ next session has, so after **every** step that changes the state of things, this
 | `Deck.cs` | Playback and the session's state (static: disc, chosen, power, pause, track, position): one `AudioSource` on the Music mixer group; soundtrack discs loop their song, next/prev change disc; MY loads each song off the disk (`UnityWebRequestMultimedia`, streamed), next/prev change song; the display's lines |
 | `Discs.cs` | The discs: the game's songs gathered from `Resources.Load` (race songs), every `MapDefinition.musicTrack/altMusicTrack` and loaded clips named `* OST`, at each scene load until all `Known` are found; duplicates (same samples) merged into one disc with aliases, logged; the MY folder |
 | `RaceMusicPatch.cs` | Prefix on `TrackManager.PlayRaceMusic`: with a stereo, the game's pick (`PickRaceSong`, private) goes to `Deck.Go` and the game's song is not started |
-| `StereoDash.cs` | Builds the head unit (right edge 0.15 left of the wheel's rim, centre 0.5 above the wheel's, at the wheel's depth; radius from the sprite, not the turning bounds), slanted by `Stereo.Slant` (casing columns lifted by whole pixels; knob, keys, badge and letters upright, lifted whole: `Art.SlantedHeadUnit`, `Art.LcdSlanted`; the 2x display's glass in casing-pixel steps so it meets the window), and the visor (camera viewport point `Visor.ScreenX/Y` projected onto the wheel's plane); sprites pivot bottom left, placed in art pixels (`UnitLocal`); cockpit pixel = median over cockpit sprites (fallback 0.05); lit casing = own copy of the wheel's material with `_BaseMap` set; the display unlit at 2x; keys = `StereoButton` (`Clickable`) on `InteriorSquareCollider`s at `sortingLayer` -100, 0.1 in front, a unit-wide one at -101 whose right click ejects (every key's right click too); the loose discs (`Loose`: sleeve → hand → slot / visor / fall → sleeve; `sticking` = disc half out of the slot, static) |
+| `StereoDash.cs` | Builds the head unit (right edge 0.15 left of the wheel's rim, centre 0.5 above the wheel's, at the wheel's depth; radius from the sprite, not the turning bounds), drawn on its `Face` (the vanishing point = where the cockpit camera's middle ray meets the wheel's plane, `Vanish`; worked out twice since the face's width moves its left end), and the visor (camera viewport point `Visor.ScreenX/Y` projected onto the wheel's plane); sprites pivot bottom left; the unit object at the face canvas's bottom left, everything placed in canvas pixels; cockpit pixel = median over cockpit sprites (fallback 0.05); lit casing = own copy of the wheel's material with `_BaseMap` set; the display unlit at 2x; keys = `StereoButton` (`Clickable`) on `InteriorSquareCollider`s at `sortingLayer` -100, 0.1 in front, a unit-wide one at -101 whose right click ejects (every key's right click too); the loose discs (`Loose`: sleeve → hand → slot / visor / fall → sleeve; `sticking` = disc half out of the slot, static) |
+| `Face.cs` | The head unit in the dash's perspective (managed, `tools/preview` draws it): the dash's forward lines run to the view's vanishing point, so the face's top and bottom run to it, the left (near) end tallest, the face 0.7 as wide at `Stereo.Perspective` 1. Flat layout from `Art` (64x28) mapped by `X(u)`/`Y(x, v)`; plain parts drawn per column (`Span` keeps nested rings a pixel each); knob an ellipse; key signs (3x3) and badge upright; `Display` at 2x, glass in whole cockpit pixels, letters leaning a display pixel per column along the window's edges; slot geometry for discs (`SlotClip`, `SlotDiscWidth`: a disc in the slot is an oval, `DiscInRow`/`DiscOutRow`) |
 | `Hand.cs` | The game's `Grabbable` subclassed: `KnobGrab` (never moves; measures the hand's turn round its middle, `angle` follows so the grip point goes round; 270 degrees = 0..10), `SleeveGrab` (the wallet's sleeve; `grabRedirect` hands the Grabber a new loose disc), `DiscGrab` (follows the hand exactly, no tilt; falls with gravity in the cockpit's plane when let go; still while in the slot) |
 | `Sounds.cs` | Borrowed clicks: `Grab1` (keys; quiet and high for each volume step), `Reload` at a higher pitch (disc in/out of the slot), `Grab2` (disc taken from a sleeve or the slot) |
-| `Art.cs` | Pixel art, managed only (so `tools/preview` draws it): `Canvas`, 3x5 font, `HeadUnit` (64x28 dash px: knob, display window, slot row 23 x 20-53, eject, 4 keys, CD badge), `Lifts`/`Lift` (the slant, column by column: only for plain parts), `LiftRigid`/`Pieces` (knob, keys, eject, badge, and each display letter lifted whole), `SlantedHeadUnit`, `LcdSlanted` (letters rise one display pixel at a time), `Lcd` (amber on brown with ghost segments), `LooseDisc` (31 px, full-face label, number/MY, clipped below the slot), `VisorWallet` (overlapping sleeves cut in a curve, a 7 px crescent per disc, numbers under them; `DiscCorner`, `PocketPlace`), `DrawDisc`, `LabelFor` (map colours) |
+| `Art.cs` | Pixel art, managed only (so `tools/preview` draws it): `Canvas`, 3x5 font, `HeadUnit` (64x28 dash px: knob, display window, slot row 23 x 20-53, eject, 4 keys, CD badge), `Lcd` (amber on brown with ghost segments), `LooseDisc` (31 px, full-face label, number/MY, clipped below the slot, an oval of a given width in the slot), `VisorWallet` (overlapping sleeves cut in a curve, a 7 px crescent per disc, numbers under them; `DiscCorner`, `PocketPlace`), `DrawDisc`, `LabelFor` (map colours) |
 
 ## Rules that matter
 
@@ -97,6 +98,11 @@ next session has, so after **every** step that changes the state of things, this
 - 0.2.0 test (screenshot): "visor looks good but the radio looks pretty bad now"; "all the controls and what not seem to work fine".
   Cause: shearing the whole face column by column broke the text, keys and knob apart. **Never shear detailed art per column**:
   only plain edges and lines; details stay upright and are lifted whole.
+- 0.2.1 test (screenshot with lines drawn on): "you have the perspective completely opposite of what it should be". The dash's edges
+  by the stereo run **forward**, to the vanishing point in the middle of the view (they rise about 0.7 there), so the face recedes to
+  the right, toward the wheel: the **left end is the near one, tallest**, the top and bottom close in toward the vanishing point, and
+  the face is foreshortened (narrower). 0.2.0/0.2.1 drew a parallelogram rising only 0.33/0.25. Take the angle from the camera, not
+  a guess.
 
 ## Checking changes
 
@@ -109,7 +115,7 @@ build once against the refs).
   tools/check.sh <halfgriprefs>/game <HalfGripTools>/dist/BepInEx/plugins/HalfGripTools/HalfGripTools.dll
   ```
 - Pictures: `dotnet run -c Release --project tools/preview -p:Refs=<halfgriprefs> -- <out dir>` writes `unit.png`/`visor.png` (one
-  pixel per cockpit pixel, for laying over a screenshot at ~4.3x on 1080p), `unit-4x.png`, `visor-4x.png`, `unit-slanted-4x.png` (as the game builds it, slanted by the optional second argument, default 0.25, a disc half out; copy to `docs/unit-slanted.png`), `unit-slanted-nodisc-4x.png`, `disc-4x.png`, `icon.png` (copy to
+  pixel per cockpit pixel, for laying over a screenshot at ~4.3x on 1080p), `unit-4x.png`, `visor-4x.png`, `unit-face-4x.png` / `unit-face-disc-4x.png` (on its `Face` as the game builds it, a disc half out in the second; the vanishing point in cockpit px from the face's corner as the optional 2nd and 3rd arguments, default 201 137; copy the second to `docs/unit-face.png`), `unit-flat-4x.png` (`Stereo.Perspective` 0), `disc-4x.png`, `icon.png` (copy to
   `Stereo/icon.png`). `docs/mockup.png` is those laid over the owner's screenshot where `StereoDash` computes they go (by hand, PIL).
 - Game code: `DOTNET_ROLL_FORWARD=Major ilspycmd -p -o <dir> <refs>/game/HalfGrip_Data/Managed/Assembly-CSharp.dll`.
 - In game (the owner tests): copy `Stereo/` to `<game>\BepInEx\HalfGripMods\`, `Debug.VerboseLog=true`, read `BepInEx\LogOutput.log`
@@ -118,17 +124,20 @@ build once against the refs).
 ## Status (keep current)
 
 - **0.1.0** tested by the owner: works; songs not duplicates.
-- **0.2.0** tested by the owner (screenshot, Forest): drag and drop, eject, the knob and the keys all work; the visor looks good; the
-  radio "looks pretty bad" (the per-column shear broke its details, see *Owner's wishes*). Its slant 0.33 was also steeper than the
-  dash beside it (the dash's lines there rise about 0.23-0.30).
-- **0.2.1** on `claude/laughing-darwin-uowk66` (pushed, **no PR yet**): only the casing's plain parts follow the slant column by column;
-  the knob, keys, eject key and badge are upright and lifted whole, and so is each display letter (rising a display pixel at a time,
-  so words do not break); default slant 0.25 (one up per four), moved on from 0.33 once by `Mod.Migrate` (`Debug.ConfigVersion` 2).
-  Checked: compiles, `tools/preview` (`docs/unit-slanted.png`), `docs/mockup.png` = the new unit laid over the owner's 0.2.0
-  screenshot at the old one's place (PIL, by hand). **Not tested in game.**
-- **Untested guesses:** whether a loose disc draws under the hand (log line `hand sorting`); fall speed (600 px/s²).
-- **Waiting on the owner:** a look at 0.2.1's radio in game (screenshot). If it still looks wrong, ask what exactly: the slant's size,
-  or the slant at all (`Stereo.Slant` 0 gives the flat 0.1.0 look).
+- **0.2.0** tested (Forest): drag and drop, eject, the knob and the keys all work; the visor looks good; the radio looked bad (sheared).
+- **0.2.1** tested (screenshot with lines): the perspective was the wrong way round (see *Owner's wishes*).
+- **0.2.2** on `claude/laughing-darwin-uowk66` (pushed, **no PR yet**): the head unit is drawn on a `Face` in the dash's perspective,
+  its lines running to the cockpit camera's vanishing point, the near left end tallest, 45 px wide (was 64); the knob an ellipse; key
+  signs 3x3 upright; the badge left out where it does not fit (it does not at 45 px); the display's letters lean with the face (11
+  letters a line, the song's name scrolls); a disc in the slot is an oval at the face's angle. `Stereo.Slant` is gone (its old value
+  stays in the file, unused); `Stereo.Perspective` (0..1, default 1) scales it, 0 face on. Checked: compiles, `tools/preview`
+  (`docs/unit-face.png`), `docs/mockup.png` = the new face laid over the owner's 0.2.1 screenshot (vanishing point (186, 141) px from
+  the face's corner, measured there; PIL, by hand). **Not tested in game.**
+- **Untested guesses:** that the camera's middle ray is the dash's vanishing point (the log's `vanishing point ... px from its
+  corner` should read about (190, 140)); the knob's turning feel on an ellipse; whether a loose disc draws under the hand (log line
+  `hand sorting`); fall speed (600 px/s²).
+- **Waiting on the owner:** a screenshot of 0.2.2's radio in game. If the angle is near but off, the vanishing point is the thing to
+  check; if the letters are hard to read, ask before changing them (upright letters climb in stairs at this angle).
 - **Open questions for the owner:** the sounds borrowed (`Grab1`, `Grab2`, `Reload`); should the music start before the countdown
   ends; the Open World (does it call `PlayRaceMusic`?); the Helicopter hides the wheel (the stereo is still placed from it).
-- **Next step:** the owner's look at 0.2.1; then a PR.
+- **Next step:** the owner's look at 0.2.2; then a PR.

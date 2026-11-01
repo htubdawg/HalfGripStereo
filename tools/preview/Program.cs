@@ -24,35 +24,17 @@ namespace HalfGripStereo
 			Png.Save(Path.Combine(dir, "unit.png"), Half(unit), Art.UnitWidth, Art.UnitHeight, 1);
 			Png.Save(Path.Combine(dir, "unit-4x.png"), unit.Px, unit.W, unit.H, 2);
 
-			// As in the cockpit: slanted along the dash, with a disc half out of the slot.
-			float slant = args.Length > 1 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 0.25f;
-			int[] lift = Art.Lifts(Art.UnitWidth, slant);
-			Art.Canvas slanted2 = Slanted(lift, "CD2 ▶ 1:23", "NEON 2");
-			Art.Canvas slanted = new Art.Canvas(slanted2.W / 2, slanted2.H / 2);
-			Art.Canvas dash = new Art.Canvas(slanted.W + 8, slanted.H + 24);
-			int left = Art.SlotDiscLeft, bottom = 13 + lift[left + Art.DiscSize / 2];
-			int[] clip = new int[Art.DiscSize];
-			for (int x = 0; x < clip.Length; x++)
-			{
-				clip[x] = Art.SlotRow + 1 + lift[left + x] - bottom;
-			}
-			// At the display's resolution, the rest doubled.
-			Art.Canvas big = new Art.Canvas(dash.W * 2, dash.H * 2);
-			big.Paste(slanted2, 8, 8);
-			Art.Canvas disc = Art.LooseDisc(Art.LabelFor("NEON"), "2", clip);
-			for (int y = 0; y < disc.H * 2; y++)
-			{
-				for (int x = 0; x < disc.W * 2; x++)
-				{
-					Color32 p = disc.Get(x / 2, y / 2);
-					if (p.a > 0)
-					{
-						big.Set(8 + 2 * left + x, 8 + 2 * bottom + y, p);
-					}
-				}
-			}
-			Png.Save(Path.Combine(dir, "unit-slanted-4x.png"), big.Px, big.W, big.H, 2);
-			Png.Save(Path.Combine(dir, "unit-slanted-nodisc-4x.png"), slanted2.Px, slanted2.W, slanted2.H, 2);
+			// As in the cockpit: on its face, in the dash's perspective (the vanishing point as in the owner's 0.2.1 screenshot, in cockpit
+			// pixels from the face's bottom left; the optional second and third arguments), with and without a disc half out of the slot.
+			float vx = args.Length > 2 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 201f;
+			float vy = args.Length > 2 ? float.Parse(args[2], System.Globalization.CultureInfo.InvariantCulture) : 137f;
+			Face face = new Face(new Vector2(vx, vy), 1f);
+			Art.Canvas onFace = OnFace(face, "CD2 ▶ 1:23", "NEON 2", false);
+			Png.Save(Path.Combine(dir, "unit-face-4x.png"), onFace.Px, onFace.W, onFace.H, 2);
+			Art.Canvas withDisc = OnFace(face, "CD2 ▶ 1:23", "NEON 2", true);
+			Png.Save(Path.Combine(dir, "unit-face-disc-4x.png"), withDisc.Px, withDisc.W, withDisc.H, 2);
+			Art.Canvas flatFace = OnFace(new Face(new Vector2(vx, vy), 0f), "CD2 ▶ 1:23", "NEON 2", false);
+			Png.Save(Path.Combine(dir, "unit-flat-4x.png"), flatFace.Px, flatFace.W, flatFace.H, 2);
 			Art.Canvas loose = Art.LooseDisc(Art.LabelFor("MIX"), "MY", null);
 			Png.Save(Path.Combine(dir, "disc-4x.png"), loose.Px, loose.W, loose.H, 4);
 
@@ -105,32 +87,34 @@ namespace HalfGripStereo
 			return big;
 		}
 
-		/// <summary>The head unit along the dash as StereoDash builds it, at the display's resolution: casing doubled, display laid on.</summary>
-		private static Art.Canvas Slanted(int[] lift, string top, string bottom)
+		/// <summary>The head unit on its face as StereoDash builds it, at the display's resolution: casing doubled, display laid on.</summary>
+		private static Art.Canvas OnFace(Face face, string top, string bottom, bool disc)
 		{
-			Art.Canvas casing = Art.SlantedHeadUnit(null, true, 0.7f, lift);
-			int d = Art.LcdDetail;
-			Art.Canvas big = new Art.Canvas(casing.W * d, casing.H * d);
-			for (int y = 0; y < big.H; y++)
+			int d = Art.LcdDetail, pad = 4, above = disc ? 24 : 0;
+			Art.Canvas casing = face.Casing(null, true, 0.7f);
+			Art.Canvas big = new Art.Canvas((casing.W + 2 * pad) * d, (casing.H + 2 * pad + above) * d);
+			void Blit(Art.Canvas src, int x0, int y0, int scale)
 			{
-				for (int x = 0; x < big.W; x++)
+				for (int y = 0; y < src.H * scale; y++)
 				{
-					big.Set(x, y, casing.Get(x / d, y / d));
+					for (int x = 0; x < src.W * scale; x++)
+					{
+						Color32 p = src.Get(x / scale, y / scale);
+						if (p.a > 0)
+						{
+							big.Set(x0 + x, y0 + y, p);
+						}
+					}
 				}
 			}
-			RectInt win = Art.LcdWindow;
-			int[] lcdLift = new int[Art.LcdWidth];
-			int lowest = int.MaxValue;
-			for (int x = 0; x < lcdLift.Length; x++)
+			Blit(casing, pad * d, pad * d, d);
+			face.DisplayCorner(out int cx, out int cy);
+			Blit(face.Display(top, bottom, true), (pad + cx) * d, (pad + cy) * d, 1);
+			if (disc)
 			{
-				lcdLift[x] = d * lift[win.x + x / d];
-				lowest = Math.Min(lowest, lcdLift[x]);
+				int b = face.DiscOutRow;
+				Blit(Art.LooseDisc(Art.LabelFor("NEON"), "2", face.SlotClip(b), face.SlotDiscWidth), (pad + face.SlotDiscLeft) * d, (pad + b) * d, d);
 			}
-			for (int x = 0; x < lcdLift.Length; x++)
-			{
-				lcdLift[x] -= lowest;
-			}
-			big.Paste(Art.LcdSlanted(top, bottom, true, lcdLift), win.x * d, win.y * d + lowest);
 			return big;
 		}
 
