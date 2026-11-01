@@ -6,7 +6,7 @@ A CD stereo built into your car's cockpit. It sits left of the steering wheel, a
 each song of the game's soundtrack plus one disc, **MY**, that plays your own songs from a folder on your computer. You work it with
 the cockpit hand, like the shifter and the levers. No keys.
 
-![The stereo and the CD wallet in the cockpit (mock-up)](docs/mockup.png)
+![The stereo and the CD wallet in the cockpit](docs/screenshot.jpg)
 
 ## Using it
 

@@ -122,7 +122,7 @@ build once against the refs).
   ```
 - Pictures: `dotnet run -c Release --project tools/preview -p:Refs=<halfgriprefs> -- <out dir>` writes `unit.png`/`visor.png` (one
   pixel per cockpit pixel, for laying over a screenshot at ~4.3x on 1080p), `unit-4x.png`, `visor-4x.png`, `unit-face-4x.png` / `unit-face-disc-4x.png` (on its `Face` as the game builds it, a disc half out in the second; the vanishing point in cockpit px from the face's corner as the optional 2nd and 3rd arguments, default 201 137, then `Stereo.Lean`, default 3; copy the second to `docs/unit-face.png`), `unit-flat-4x.png` (`Stereo.Lean` 0), `disc-4x.png`, `icon.png` (copy to
-  `Stereo/icon.png`). `docs/mockup.png` is those laid over the owner's screenshot where `StereoDash` computes they go (by hand, PIL).
+  `Stereo/icon.png`). `docs/screenshot.jpg` is the README's picture: the owner's own in-game screenshot of 0.2.3 (Forest).
 - Game code: `DOTNET_ROLL_FORWARD=Major ilspycmd -p -o <dir> <refs>/game/HalfGrip_Data/Managed/Assembly-CSharp.dll`.
 - In game (the owner tests): copy `Stereo/` to `<game>\BepInEx\HalfGripMods\`, `Debug.VerboseLog=true`, read `BepInEx\LogOutput.log`
   (look for `found the song`, `same song as`, `put in the cockpit`, `head unit at`, `CD wallet with`, `the race starts`).
@@ -133,14 +133,15 @@ build once against the refs).
 - **0.2.0** tested (Forest): drag and drop, eject, the knob and the keys all work; the visor looks good; the radio looked bad (sheared).
 - **0.2.1** tested (screenshot with lines): the perspective was the wrong way round (see *Owner's wishes*).
 - **0.2.2** (pushed, not released): the face converged on the screen's middle; the owner rejected it with a mock-up (see *Owner's wishes*).
-- **0.2.3** on `claude/laughing-darwin-uowk66`, **PR #1** to `main` (open): the owner's mock-up built: `Face` is the flat 0.1.0 layout,
+- **0.2.3** released on `main` (PR #1, merged): the owner's mock-up built: `Face` is the flat 0.1.0 layout,
   square on, sides leaning toward the vanishing point (`Stereo.Lean`, default 3 px for the left side; the right about 2), knob an
   upright oval. `Stereo.Perspective` is gone (a new key, no migration). Checked: compiles, `tools/preview` (`docs/unit-face.png`),
-  `docs/mockup.png` = the new face laid over the owner's 0.1.0 screenshot where the 0.1.0 unit was (PIL, by hand), next to the
-  owner's mock-up it matches. **Not tested in game.**
+  and a mock-up laid over the owner's 0.1.0 screenshot. **Owner's in-game screenshot** (Forest, 1080p): the radio square on with
+  its sides leaning, a disc half out of the slot, `NO DISC / PICK A CD` on the display, the wallet on the visor; the owner asked for
+  it as the README's picture (`docs/screenshot.jpg`, replacing the old `docs/mockup.png`), so the look is accepted.
 - **Untested guesses:** the knob's turning feel on an oval; whether a loose disc draws under the hand (log line `hand sorting`);
   fall speed (600 px/s²). The log's `vanishing point ... px from its corner` sets the right side's lean.
-- **Waiting on the owner:** a screenshot of 0.2.3 in game. If the lean is off, `Stereo.Lean` changes it live (save the cfg).
+- **Open:** PR #2, the README's picture (`docs/screenshot.jpg`), on `claude/laughing-darwin-uowk66`. If the lean ever needs tuning, `Stereo.Lean` changes it live (save the cfg).
 - **Open questions for the owner:** the sounds borrowed (`Grab1`, `Grab2`, `Reload`); should the music start before the countdown
   ends; the Open World (does it call `PlayRaceMusic`?); the Helicopter hides the wheel (the stereo is still placed from it).
-- **Next step:** the owner's look at 0.2.3 and merging PR #1; after the merge, restart the branch from `origin/main`.
+- **Next step:** the owner merges PR #2; for any new work after that, restart the branch from `origin/main`.
