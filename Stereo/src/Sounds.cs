@@ -6,21 +6,25 @@ namespace HalfGripStereo
 {
 	/// <summary>
 	/// The stereo's clicks, borrowed from the game's own sounds (found by name among the loaded clips at each scene load until found, and
-	/// kept): the hand's grab click for a key, the gun's reload, higher, for a disc going in or out. Not found, it works in silence.
+	/// kept): the hand's grab click for a key (and, quiet and high, for each step of the volume knob), the gun's reload, higher, for a
+	/// disc going in or out of the slot, the hand's second grab click for a disc taken out of a sleeve or the slot. Not found, it works
+	/// in silence.
 	/// </summary>
 	internal static class Sounds
 	{
 		private const string KeyName = "Grab1";
 		private const string DiscName = "Reload";
+		private const string PullName = "Grab2";
 
 		private static AudioClip key;
 		private static AudioClip disc;
+		private static AudioClip pull;
 
 		internal static void OnSceneLoaded(Scene scene) => Find();
 
 		internal static void Find()
 		{
-			if (key != null && disc != null)
+			if (key != null && disc != null && pull != null)
 			{
 				return;
 			}
@@ -42,6 +46,11 @@ namespace HalfGripStereo
 						disc = c;
 						Mod.Info("Stereo: kept the sound '" + DiscName + "' for the discs");
 					}
+					else if (pull == null && c.name == PullName)
+					{
+						pull = c;
+						Mod.Info("Stereo: kept the sound '" + PullName + "' for taking a disc");
+					}
 				}
 			}
 			catch (Exception e)
@@ -53,6 +62,11 @@ namespace HalfGripStereo
 		internal static void Click(GameObject on) => Play(key, on, 0.5f, 1.5f);
 
 		internal static void Disc(GameObject on) => Play(disc, on, 0.45f, 1.35f);
+
+		internal static void Pull(GameObject on) => Play(pull ?? key, on, 0.45f, 1.2f);
+
+		/// <summary>One step of the volume knob.</summary>
+		internal static void Tick(GameObject on) => Play(key, on, 0.2f, 2.2f);
 
 		/// <summary>From <paramref name="on"/>, so it goes to the mixer group of the cockpit it is in.</summary>
 		private static void Play(AudioClip clip, GameObject on, float volume, float pitch)

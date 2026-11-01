@@ -24,6 +24,42 @@ namespace HalfGripStereo
 			Png.Save(Path.Combine(dir, "unit.png"), Half(unit), Art.UnitWidth, Art.UnitHeight, 1);
 			Png.Save(Path.Combine(dir, "unit-4x.png"), unit.Px, unit.W, unit.H, 2);
 
+			// As in the cockpit: slanted along the dash, with a disc half out of the slot.
+			float slant = args.Length > 1 ? float.Parse(args[1], System.Globalization.CultureInfo.InvariantCulture) : 0.33f;
+			int[] lift = Art.Lifts(Art.UnitWidth, slant);
+			int[] lift2 = new int[unit.W];
+			for (int x = 0; x < unit.W; x++)
+			{
+				lift2[x] = 2 * lift[x / 2];
+			}
+			Art.Canvas slanted2 = Art.Lift(unit, lift2);
+			Art.Canvas slanted = new Art.Canvas(slanted2.W / 2, slanted2.H / 2);
+			Art.Canvas dash = new Art.Canvas(slanted.W + 8, slanted.H + 24);
+			int left = Art.SlotDiscLeft, bottom = 13 + lift[left + Art.DiscSize / 2];
+			int[] clip = new int[Art.DiscSize];
+			for (int x = 0; x < clip.Length; x++)
+			{
+				clip[x] = Art.SlotRow + 1 + lift[left + x] - bottom;
+			}
+			// At the display's resolution, the rest doubled.
+			Art.Canvas big = new Art.Canvas(dash.W * 2, dash.H * 2);
+			big.Paste(slanted2, 8, 8);
+			Art.Canvas disc = Art.LooseDisc(Art.LabelFor("NEON"), "2", clip);
+			for (int y = 0; y < disc.H * 2; y++)
+			{
+				for (int x = 0; x < disc.W * 2; x++)
+				{
+					Color32 p = disc.Get(x / 2, y / 2);
+					if (p.a > 0)
+					{
+						big.Set(8 + 2 * left + x, 8 + 2 * bottom + y, p);
+					}
+				}
+			}
+			Png.Save(Path.Combine(dir, "unit-slanted-4x.png"), big.Px, big.W, big.H, 2);
+			Art.Canvas loose = Art.LooseDisc(Art.LabelFor("MIX"), "MY", null);
+			Png.Save(Path.Combine(dir, "disc-4x.png"), loose.Px, loose.W, loose.H, 4);
+
 			string[] titles = { "FOREST", "NEON", "NEON 2", "FACTORY", "STADION", "WINTER", "MIX" };
 			List<Art.DiscLook> looks = new List<Art.DiscLook>();
 			for (int i = 0; i < titles.Length; i++)

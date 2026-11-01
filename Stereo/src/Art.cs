@@ -408,7 +408,91 @@ namespace HalfGripStereo
 		private static string Fit(string s, int n) => s == null ? "" : s.Length > n ? s.Substring(0, n) : s;
 
 		// ---------------------------------------------------------------------------------------------------------------------------
-		// The CD wallet on the sun visor.
+		// The dash's slant: the head unit is drawn face on, then each column is lifted by whole pixels so its top and bottom run along
+		// the dash's top edge, as the cockpit's own parts are drawn in perspective. No row is dropped, so every pixel of the art stays.
+
+		/// <summary>How many pixels column <paramref name="x"/> is lifted by at <paramref name="slant"/> pixels up per pixel across.</summary>
+		internal static int Rise(int x, float slant) => Mathf.FloorToInt(x * slant + 0.5f);
+
+		/// <summary>The lift of each of <paramref name="w"/> columns, the lowest at 0 (a negative slant leans the other way).</summary>
+		internal static int[] Lifts(int w, float slant)
+		{
+			int[] lift = new int[w];
+			int low = int.MaxValue;
+			for (int x = 0; x < w; x++)
+			{
+				lift[x] = Rise(x, slant);
+				low = Mathf.Min(low, lift[x]);
+			}
+			for (int x = 0; x < w; x++)
+			{
+				lift[x] -= low;
+			}
+			return lift;
+		}
+
+		/// <summary>The picture with column x lifted by <paramref name="lift"/>[x] pixels (lifts at least 0), the corners left clear.</summary>
+		internal static Canvas Lift(Canvas src, int[] lift)
+		{
+			int top = 0;
+			foreach (int l in lift)
+			{
+				top = Mathf.Max(top, l);
+			}
+			Canvas c = new Canvas(src.W, src.H + top);
+			for (int x = 0; x < src.W; x++)
+			{
+				for (int y = 0; y < src.H; y++)
+				{
+					c.Px[(y + lift[x]) * c.W + x] = src.Px[y * src.W + x];
+				}
+			}
+			return c;
+		}
+
+		// ---------------------------------------------------------------------------------------------------------------------------
+		// The discs, at the stereo's own scale: a disc is as wide as most of the slot.
+
+		/// <summary>A disc's diameter in cockpit pixels, and its radius (the disc's middle is between pixels: 15.5 from either edge).</summary>
+		internal const int DiscSize = 31;
+		internal const float DiscRadius = DiscSize * 0.5f;
+
+		/// <summary>The slot on the head unit: the dark row, and the columns a disc stands over when it goes in (centred in the slot).</summary>
+		internal const int SlotRow = 23;
+		internal const int SlotLeft = 20;
+		internal const int SlotRight = 53;
+		internal static int SlotDiscLeft => (SlotLeft + SlotRight + 1 - DiscSize) / 2;
+
+		/// <summary>
+		/// A disc on its own (in the hand, falling, or half out of the slot): its label colour with its number or MY on it. Rows below
+		/// <paramref name="clipBelow"/>[x] in column x are left clear (the part already inside the slot); null clips nothing.
+		/// </summary>
+		internal static Canvas LooseDisc(Color32 label, string mark, int[] clipBelow)
+		{
+			Canvas c = new Canvas(DiscSize, DiscSize);
+			float m = (DiscSize - 1) * 0.5f;
+			DrawDisc(c, m, m, DiscRadius, label);
+			if (!string.IsNullOrEmpty(mark))
+			{
+				int tw = mark.Length * Advance - 1;
+				Text(c, mark, Mathf.RoundToInt(m - (tw - 1) * 0.5f), Mathf.RoundToInt(m) + 5, LabelInk);
+			}
+			if (clipBelow != null)
+			{
+				for (int x = 0; x < c.W && x < clipBelow.Length; x++)
+				{
+					for (int y = 0; y < c.H && y < clipBelow[x]; y++)
+					{
+						c.Px[y * c.W + x] = Clear;
+					}
+				}
+			}
+			return c;
+		}
+
+		// ---------------------------------------------------------------------------------------------------------------------------
+		// The CD wallet on the sun visor, after the owner's photo of one: black sleeves overlapping like cards, each cut in a curve on
+		// its right, so only a crescent of each disc shows, the front panel (on the left) the widest.
 
 		private static readonly Color32 Visor = new Color32(70, 66, 62, 255);
 		private static readonly Color32 VisorEdge = new Color32(44, 42, 40, 255);
@@ -416,40 +500,53 @@ namespace HalfGripStereo
 		private static readonly Color32 Stitch = new Color32(110, 104, 96, 255);
 		private static readonly Color32 Hinge = new Color32(128, 128, 134, 255);
 		private static readonly Color32 HingeDark = new Color32(70, 70, 76, 255);
-		private static readonly Color32 Wallet = new Color32(22, 22, 24, 255);
-		private static readonly Color32 WalletEdge = new Color32(46, 46, 50, 255);
-		private static readonly Color32 Pocket = new Color32(16, 16, 18, 255);
-		private static readonly Color32 Sleeve = new Color32(150, 170, 186, 255);
+		private static readonly Color32 Wallet = new Color32(24, 24, 27, 255);
+		private static readonly Color32 WalletEdge = new Color32(52, 52, 57, 255);
+		private static readonly Color32 WalletStitch = new Color32(70, 70, 76, 255);
+		private static readonly Color32 Pocket = new Color32(10, 10, 12, 255);
 		private static readonly Color32 Strap = new Color32(34, 34, 38, 255);
 		private static readonly Color32 Silver = new Color32(196, 200, 208, 255);
 		private static readonly Color32 SilverDark = new Color32(132, 136, 146, 255);
 		private static readonly Color32 Hole = new Color32(14, 14, 16, 255);
 		private static readonly Color32 LabelInk = new Color32(30, 30, 30, 255);
+		private static readonly Color32 Pen = new Color32(210, 206, 196, 255);
 
 		/// <summary>One CD as the wallet shows it: its label colour and a short mark on the label.</summary>
 		internal struct DiscLook
 		{
 			public Color32 Label;
 			public string Mark;
-			/// <summary>The disc is in the stereo: its pocket is empty.</summary>
+			/// <summary>The disc is not in its sleeve (in the stereo, in the hand): the sleeve is empty.</summary>
 			public bool Out;
 		}
 
-		/// <summary>Pocket width (and pitch) in dash pixels, and the disc's diameter.</summary>
-		internal const int PocketWidth = 13;
-		internal const int PocketGap = 1;
-		internal const int DiscSize = 11;
-		internal const int VisorHeight = 30;
+		/// <summary>Columns from one disc to the next, and how much of each disc shows past its sleeve's cut.</summary>
+		internal const int DiscPitch = 10;
+		internal const int Crescent = 7;
+		/// <summary>The front panel's width left of the first disc.</summary>
+		private const int Lead = 18;
+		private const int WalletLeft = 5;
+		private const int WalletBottom = 4;
+		/// <summary>Rows under the discs for their numbers.</summary>
+		private const int NumberRows = 7;
+		internal const int VisorHeight = WalletBottom + NumberRows + DiscSize + 2 + 4;
 
-		/// <summary>The visor's width for <paramref name="discs"/> pockets.</summary>
-		internal static int VisorWidth(int discs) => 2 * 7 + Mathf.Max(1, discs) * (PocketWidth + PocketGap) - PocketGap + 4;
+		/// <summary>The visor's width for <paramref name="discs"/> discs.</summary>
+		internal static int VisorWidth(int discs) => WalletLeft + Lead + (Mathf.Max(1, discs) - 1) * DiscPitch + DiscSize + 4 + WalletLeft;
 
-		/// <summary>Where pocket <paramref name="i"/> is on the visor, in dash pixels: what the hand clicks.</summary>
-		internal static RectInt PocketPlace(int i) => new RectInt(9 + i * (PocketWidth + PocketGap), 5, PocketWidth, 20);
+		/// <summary>Disc <paramref name="i"/>'s bottom left in the wallet, in cockpit pixels.</summary>
+		internal static Vector2Int DiscCorner(int i) => new Vector2Int(WalletLeft + Lead + i * DiscPitch, WalletBottom + NumberRows);
+
+		/// <summary>What the hand takes disc <paramref name="i"/> by: its crescent and its number under it.</summary>
+		internal static RectInt PocketPlace(int i)
+		{
+			Vector2Int d = DiscCorner(i);
+			return new RectInt(d.x + DiscSize - Crescent - 1, WalletBottom + 1, Crescent + 1, NumberRows + DiscSize - 1);
+		}
 
 		/// <summary>
-		/// The sun visor, folded up against the roof, with a black CD wallet strapped round it: one pocket per disc, each disc showing
-		/// over the top of its clear sleeve with its number on the strap below. A disc in the stereo leaves its pocket empty.
+		/// The sun visor, folded up against the roof, with the wallet strapped round it. A disc that is out leaves its sleeve empty and
+		/// dark. Drawn back to front: each disc, then its sleeve over it, from the last (at the back, on the right) to the first.
 		/// </summary>
 		internal static Canvas VisorWallet(IList<DiscLook> discs)
 		{
@@ -465,53 +562,88 @@ namespace HalfGripStereo
 			c.Speckle(1, 1, w - 2, h - 2, 4, 5);
 			for (int x = 3; x < w - 3; x += 2)
 			{
-				c.Set(x, 2, Stitch);
+				c.Set(x, 1, Stitch);
 				c.Set(x, h - 4, Stitch);
 			}
-			// The hinge rod showing at the top corners.
 			c.Rect(0, h - 2, 3, h - 1, HingeDark);
 			c.Rect(0, h - 1, 3, h - 1, Hinge);
 			c.Rect(w - 4, h - 2, w - 1, h - 1, HingeDark);
 			c.Rect(w - 4, h - 1, w - 1, h - 1, Hinge);
 
-			// The wallet, with its elastic straps round the visor at each end.
-			int wx0 = 6, wx1 = w - 7, wy0 = 4, wy1 = h - 5;
-			c.Rect(wx0, wy0, wx1, wy1, WalletEdge);
-			c.Rect(wx0 + 1, wy0 + 1, wx1 - 1, wy1 - 1, Wallet);
-			c.Rect(wx0 - 3, 1, wx0 - 1, h - 2, Strap);
-			c.Rect(wx1 + 1, 1, wx1 + 3, h - 2, Strap);
-			c.Speckle(wx0, wy0, wx1, wy1, 3, 9);
-
-			for (int i = 0; i < n; i++)
+			int wx0 = WalletLeft, wx1 = w - 1 - WalletLeft, wy0 = WalletBottom - 1, wy1 = WalletBottom + NumberRows + DiscSize + 1;
+			// The elastic straps round the visor, top and bottom of the wallet's ends.
+			c.Rect(wx0 + 2, 0, wx0 + 6, h - 1, Strap);
+			c.Rect(wx1 - 6, 0, wx1 - 2, h - 1, Strap);
+			// The back plate, seen only where every sleeve is cut away.
+			c.Rect(wx0, wy0, wx1, wy1, Wallet);
+			for (int i = n - 1; i >= 0; i--)
 			{
-				RectInt p = PocketPlace(i);
 				DiscLook d = i < discs.Count ? discs[i] : new DiscLook { Out = true };
-				int px0 = p.x, px1 = p.xMax - 1;
-				int sleeveTop = p.y + 11;
-				c.Rect(px0, p.y + 6, px1, p.yMax - 1, Pocket);
-				float cx = px0 + (PocketWidth - 1) * 0.5f, cy = sleeveTop + 1f;
-				if (!d.Out)
+				Vector2Int corner = DiscCorner(i);
+				float cx = corner.x + DiscRadius - 0.5f, cy = corner.y + DiscRadius - 0.5f;
+				if (d.Out)
 				{
-					DrawDisc(c, cx, cy, DiscSize * 0.5f, d.Label);
+					c.Disc(cx, cy, DiscRadius, Pocket);
 				}
-				// The clear sleeve over the disc's lower half: a light top edge and a glint, the disc seen through it a shade paler.
-				for (int y = p.y + 6; y <= sleeveTop; y++)
+				else
 				{
-					for (int x = px0; x <= px1; x++)
+					DrawDisc(c, cx, cy, DiscRadius, d.Label);
+				}
+				// The sleeve: everything left of its cut, the cut a circle the disc's size moved left by the crescent.
+				float sx = cx - Crescent;
+				for (int y = wy0; y <= wy1; y++)
+				{
+					for (int x = wx0; x <= wx1; x++)
 					{
-						Color32 under = c.Get(x, y);
-						c.Set(x, y, Shade(under, 22));
+						if (Sleeve(x, y, sx, cy) && !Sleeve(x + 1, y, sx, cy) && x < wx1)
+						{
+							c.Set(x, y, y > wy0 && y < wy1 ? WalletEdge : Wallet);
+						}
+						else if (Sleeve(x, y, sx, cy))
+						{
+							c.Set(x, y, Wallet);
+						}
 					}
 				}
-				c.Rect(px0, sleeveTop, px1, sleeveTop, Sleeve);
-				c.Set(px0 + 1, sleeveTop - 2, Shade(Sleeve, -30));
-				c.Set(px0 + 2, sleeveTop - 3, Shade(Sleeve, -30));
-				// Its number on the strap underneath, in white pen.
+			}
+			// The wallet's edge, stitched, and a card pocket on the front panel.
+			for (int x = wx0; x <= wx1; x++)
+			{
+				c.Set(x, wy0, WalletEdge);
+				c.Set(x, wy1, WalletEdge);
+				if ((x & 1) == 0)
+				{
+					c.Set(x, wy1 - 1, WalletStitch);
+					c.Set(x, wy0 + 1, WalletStitch);
+				}
+			}
+			c.Rect(wx0, wy0, wx0, wy1, WalletEdge);
+			c.Rect(wx1, wy0, wx1, wy1, WalletEdge);
+			int px0 = wx0 + 3, px1 = wx0 + Lead + 1, py1 = wy0 + 20;
+			c.Rect(px0, wy0 + 3, px1, py1, WalletEdge);
+			c.Rect(px0 + 1, wy0 + 3, px1 - 1, py1 - 1, Wallet);
+			for (int x = px0 + 1; x < px1; x += 2)
+			{
+				c.Set(x, py1 - 2, WalletStitch);
+			}
+			c.Speckle(wx0, wy0, wx1, wy1, 3, 9);
+			// Each disc's number under its crescent, in white pen.
+			for (int i = 0; i < n; i++)
+			{
+				DiscLook d = i < discs.Count ? discs[i] : default;
 				string mark = string.IsNullOrEmpty(d.Mark) ? (i + 1).ToString() : d.Mark;
+				RectInt p = PocketPlace(i);
 				int tw = mark.Length * Advance - 1;
-				Text(c, mark, px0 + (PocketWidth - tw) / 2, p.y, new Color32(210, 206, 196, 255));
+				Text(c, mark, p.x + (p.width - tw + 1) / 2, WalletBottom + 1, Pen);
 			}
 			return c;
+		}
+
+		/// <summary>Is (x, y) under a sleeve whose cut is the circle round (sx, cy)?</summary>
+		private static bool Sleeve(int x, int y, float sx, float cy)
+		{
+			float dx = x - sx, dy = y - cy;
+			return x <= sx || dx * dx + dy * dy <= (DiscRadius + 0.5f) * (DiscRadius + 0.5f);
 		}
 
 		/// <summary>A CD: a silver rim, the label, a clear ring round the hole and the hole, with a glint on the silver.</summary>
@@ -519,7 +651,9 @@ namespace HalfGripStereo
 		{
 			c.Disc(cx, cy, r, SilverDark);
 			c.Disc(cx, cy, r - 0.7f, Silver);
-			c.Disc(cx, cy, r * 0.68f, label);
+			// Printed edge to edge, as most discs were, so a crescent past a sleeve still shows its colour.
+			c.Disc(cx, cy, r - 2f, label);
+			c.Disc(cx, cy, r * 0.45f, Shade(label, -24));
 			c.Disc(cx, cy, Mathf.Max(1.2f, r * 0.3f), SilverDark);
 			c.Disc(cx, cy, Mathf.Max(0.6f, r * 0.14f), Hole);
 			c.Set(Mathf.RoundToInt(cx + r * 0.55f), Mathf.RoundToInt(cy + r * 0.62f), new Color32(255, 255, 255, 255));

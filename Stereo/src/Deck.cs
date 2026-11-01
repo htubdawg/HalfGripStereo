@@ -220,11 +220,17 @@ namespace HalfGripStereo
 			Insert(next);
 		}
 
-		internal void Volume(int by)
+		/// <summary>The knob turned to step <paramref name="v"/> (0 to 10); false if it was already there.</summary>
+		internal bool SetVolume(int v)
 		{
-			int v = Mathf.Clamp(Mod.Volume.Value + by, 0, Mod.VolumeSteps);
+			v = Mathf.Clamp(v, 0, Mod.VolumeSteps);
+			if (v == Mod.Volume.Value)
+			{
+				return false;
+			}
 			Mod.Volume.Value = v;
 			Note("VOL " + new string('█', v) + new string(' ', Mod.VolumeSteps - v));
+			return true;
 		}
 
 		private void Note(string text)
