@@ -6,8 +6,20 @@ player's own folder. Worked with the cockpit hand only. Current release: see `St
 
 ## Always be ready for a context clear
 
-Sessions lose their context without warning; this file is the next session's only memory. After every step that changes the state
-(a push, a PR, an owner's report, a decision), update **Status** in the same commit. Write game facts and the owner's wishes below.
+Sessions lose their context without warning (and the owner clears it on purpose between steps). This file is the only memory the
+next session has, so after **every** step that changes the state of things, this file must already say everything needed to carry on:
+
+- **Update Status in the same commit as the change** (not "later"): what changed, what was checked and how, what is untested, what
+  waits on whom, the next step. An owner's report (screenshot, log, wish) goes in Status as soon as it arrives, with the causes found,
+  before fixing.
+- **Never leave work only in the session:** commit and push each finished step to the branch. No uncommitted edits at the end of a
+  turn. Scratch renders, decompiled code and the cloned HalfGripTools are lost on a clear; anything worth keeping goes in the repo
+  (`docs/`, this file).
+- **Write down what was learned the hard way** (game facts, causes of bugs, the owner's wishes and decisions) under *Game facts* and
+  *Owner's wishes*, so a fresh session doesn't repeat a mistake or re-ask a question.
+- **A fresh session starts by:** reading this file, `git log --oneline -10` and `git status` on the branch, cloning and building
+  HalfGripTools (see *Checking changes*), and reading the files named in Status before touching anything.
+- Keep it short enough to read first thing; move settled history out of Status into one line each.
 
 ## How the mod runs
 
@@ -60,7 +72,11 @@ Sessions lose their context without warning; this file is the next session's onl
 ## Owner's wishes
 
 - The stereo left of the steering wheel; the CD holder on the sun visor (or on the dash above the stereo): one disc per OST song and
-  one for the player's own songs from a folder. Not an item.
+  one for the player's own songs from a folder.
+- **Not an item** (said mid-way through 0.1.0): it goes in no item slot, so it is part of every car. The first draft was a PASSIVE
+  shop item on the ScriptOnly mount; it was taken out before the first push.
+- Songs: "only 5 tracks and potentially 1 other one that was used in the trailer" — don't count map references twice (several maps
+  share one clip).
 
 ## Checking changes
 
@@ -81,7 +97,8 @@ build once against the refs).
 
 ## Status (keep current)
 
-- **0.1.0** on `claude/laughing-darwin-uowk66` (first version, not merged, no PR yet). Compiles; art checked with `tools/preview` and
+- **0.1.0** on `claude/laughing-darwin-uowk66` (first version, pushed, not merged, **no PR yet**; open one only when the owner asks
+  or after the first test). Compiles; art checked with `tools/preview` and
   laid over the owner's screenshot (`docs/mockup.png`). **Not tested in game.**
 - **Waiting on the owner:** first in-game test with `Debug.VerboseLog=true`: screenshot of the cockpit and the log. Check: the stereo
   and wallet show, lit, in place; each key, the knob and each disc click; the race song is replaced (no double music); the songs
