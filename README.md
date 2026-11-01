@@ -33,9 +33,26 @@ turn on `Music.Shuffle`. The mod only reads that folder: it never writes to it o
 
 ## Install
 
-1. Install [HalfGripTools](https://github.com/4l3x4nd3r0/HalfGripTools).
-2. Copy the **`Stereo`** folder from this repo into `<game>\BepInEx\HalfGripMods\`, so that `mod.json` is at
-   `HalfGripMods\Stereo\mod.json`. Copy only that folder, not the whole repo download.
+### Easy way: the HalfGripMods installer
+
+1. Download `HalfGrip-Mods-Installer.exe` from the newest release of
+   [HalfGripMods](https://github.com/4l3x4nd3r0/HalfGripMods/releases) and double-click it. If Windows says "Windows protected
+   your PC", press **More info**, then **Run anyway**. It finds the game through Steam (or asks for its folder) and installs
+   BepInEx and HalfGripTools for you.
+2. Close the game. Press **+ ADD** and paste this link to the mod's folder:
+   ```
+   https://github.com/htubdawg/HalfGripStereo/tree/main/Stereo
+   ```
+   Then press **INSTALL** on the Car Stereo's card.
+3. Start the game from Steam. The first start takes a little longer while the mods compile.
+
+**CHECK NOW** in the installer looks for updates.
+
+### By hand
+
+Install BepInEx 5 and [HalfGripTools](https://github.com/4l3x4nd3r0/HalfGripTools) 1.0.2+ as its README says. Then copy only the
+`Stereo` folder into `<game>\BepInEx\HalfGripMods\`, so that `mod.json` sits directly in `HalfGripMods\Stereo\`, not the whole
+repository download.
 
 ## Settings
 

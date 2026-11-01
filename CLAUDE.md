@@ -53,6 +53,8 @@ next session has, so after **every** step that changes the state of things, this
 - C# 10, netstandard2.1, tabs, `///` summaries that explain why, try/catch + `LogWarning` round risky work.
 - Bump `version` in `mod.json` each release, the README's version in step. A changed default needs a migration (BepInEx keeps old values).
 - Work on a branch and open a PR; do not push to `main`.
+- The README's Install leads with the HalfGripMods installer (as the other mods' do); in its by-hand steps keep it clear that only the
+  `Stereo` folder goes into `HalfGripMods\` (`mod.json` directly inside `HalfGripMods\Stereo\`).
 
 ## Game facts
 
@@ -141,7 +143,9 @@ build once against the refs).
   it as the README's picture (`docs/screenshot.jpg`, replacing the old `docs/mockup.png`), so the look is accepted.
 - **Untested guesses:** the knob's turning feel on an oval; whether a loose disc draws under the hand (log line `hand sorting`);
   fall speed (600 px/s²). The log's `vanishing point ... px from its corner` sets the right side's lean.
-- **Open:** PR #2, the README's picture (`docs/screenshot.jpg`), on `claude/laughing-darwin-uowk66`. If the lean ever needs tuning, `Stereo.Lean` changes it live (save the cfg).
+- **README picture** (`docs/screenshot.jpg`): PR #2, merged.
+- **Open:** README Install rewritten after the Helicopter's: the HalfGripMods installer first (**+ ADD** with
+  `https://github.com/htubdawg/HalfGripStereo/tree/main/Stereo`; the link form is the other mods', not tried with this repo), the copy-by-hand way after it. PR #3 on `claude/laughing-darwin-uowk66`. If the lean ever needs tuning, `Stereo.Lean` changes it live (save the cfg).
 - **Open questions for the owner:** the sounds borrowed (`Grab1`, `Grab2`, `Reload`); should the music start before the countdown
   ends; the Open World (does it call `PlayRaceMusic`?); the Helicopter hides the wheel (the stereo is still placed from it).
-- **Next step:** the owner merges PR #2; for any new work after that, restart the branch from `origin/main`.
+- **Next step:** the owner merges PR #3; for any new work after that, bring the branch up to `origin/main` first.
