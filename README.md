@@ -1,6 +1,6 @@
 # Car Stereo
 
-**Version 0.2.3** for Half Grip 0.418, a [HalfGripTools](https://github.com/4l3x4nd3r0/HalfGripTools) mod (1.0.2 or newer).
+**Version 0.2.4** for Half Grip 0.419, a [HalfGripTools](https://github.com/4l3x4nd3r0/HalfGripTools) mod (1.0.6 or newer).
 
 A CD stereo built into your car's cockpit. It sits left of the steering wheel, and a CD wallet hangs on the sun visor with one disc for
 each song of the game's soundtrack plus one disc, **MY**, that plays your own songs from a folder on your computer. You work it with
@@ -50,7 +50,7 @@ turn on `Music.Shuffle`. The mod only reads that folder: it never writes to it o
 
 ### By hand
 
-Install BepInEx 5 and [HalfGripTools](https://github.com/4l3x4nd3r0/HalfGripTools) 1.0.2+ as its README says. Then copy only the
+Install BepInEx 5 and [HalfGripTools](https://github.com/4l3x4nd3r0/HalfGripTools) 1.0.6+ as its README says. Then copy only the
 `Stereo` folder into `<game>\BepInEx\HalfGripMods\`, so that `mod.json` sits directly in `HalfGripMods\Stereo\`, not the whole
 repository download.
 
