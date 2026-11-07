@@ -82,6 +82,7 @@ next session has, so after **every** step that changes the state of things, this
   `FallingObject` (2D gravity, stuck/break-off), `BeerBottle`.
 - Hand sprites: under `MouseGrabber` (`Hand1_0`, ...), `SpriteLit` material; their sorting order is not in the dumps (the build logs it
   as `hand sorting a..b`; a loose disc draws at the wheel's order + 3).
+- **Speedrun mode does not let you use mods** (owner): no mid-race unload to handle; `ctx.OnUnload` only tidies up.
 - `MountSlot.ScriptOnly` puts an item's interior on the passive mount without occupying it (not used now; noted from the item idea).
 
 ## Owner's wishes
@@ -143,9 +144,25 @@ build once against the refs).
   it as the README's picture (`docs/screenshot.jpg`, replacing the old `docs/mockup.png`), so the look is accepted.
 - **Untested guesses:** the knob's turning feel on an oval; whether a loose disc draws under the hand (log line `hand sorting`);
   fall speed (600 px/s²). The log's `vanishing point ... px from its corner` sets the right side's lean.
-- **README picture** (`docs/screenshot.jpg`): PR #2, merged.
-- **Open:** README Install rewritten after the Helicopter's: the HalfGripMods installer first (**+ ADD** with
-  `https://github.com/htubdawg/HalfGripStereo/tree/main/Stereo`; the link form is the other mods', not tried with this repo), the copy-by-hand way after it. PR #3 on `claude/laughing-darwin-uowk66`. If the lean ever needs tuning, `Stereo.Lean` changes it live (save the cfg).
+- **README picture** (`docs/screenshot.jpg`): PR #2, merged. **README Install** (HalfGripMods installer first, by hand after): PR #3,
+  merged (the installer link form is the other mods', not tried with this repo). If the lean ever needs tuning, `Stereo.Lean` changes it live.
+- **0.2.4** (jMods audit, PR #4 on `claude/blissful-albattani-b0ecpx`): game 0.419, tools 1.0.6 (mod.json, README header and by-hand
+  step). 0.419 checked: `PlayRaceMusic`, `PickRaceSong`, `playRaceMusic`, `raceStarted`, `MusicGroup`, `ActiveMapMusic` unchanged; the
+  songs in maps.txt the same. Bugs fixed:
+  1. A **sound device change** (headphones plugged in) stops every source; the game restarts its own song (`SoundController.RestartMusic`),
+     the stereo didn't: a soundtrack disc went silent, MY skipped to the next song. `Deck` listens to `OnAudioConfigurationChanged` and
+     starts the song again from where it was once the game is not paused.
+  2. A song **found late** (`Discs.Add` inserting before the disc in use) moved the static `disc`, `sticking` and loose discs' numbers onto
+     the wrong disc. `Deck.DiscAdded` / `StereoDash.DiscAdded` shift them.
+  3. A stereo **fitted after the countdown** took `RunState.ActiveMapMusic`, which is null for tutorials and random race songs: now the
+     clip of the game's playing `2D_Music_` source (`Deck.GameSong`), then the map's.
+  A 4th fix (start the game's song again when the mod is unloaded mid-race by speedrun mode) was taken out again: the owner says
+  speedrun mode does not let you use mods at all, so that never happens (see *Game facts*).
+  Checked: `tools/check.sh` against HalfGripTools 1.0.6 built from source (worked this session) and HalfGripRefs 0.419: compiles, no
+  warnings. Art unchanged, so no new previews. **Untested in game:** all three fixes.
 - **Open questions for the owner:** the sounds borrowed (`Grab1`, `Grab2`, `Reload`); should the music start before the countdown
   ends; the Open World (does it call `PlayRaceMusic`?); the Helicopter hides the wheel (the stereo is still placed from it).
-- **Next step:** the owner merges PR #3; for any new work after that, bring the branch up to `origin/main` first.
+- **Untested guess:** MY songs load with `streamAudio` and the request is disposed after `GetContent`; if a MY song ever cuts out or
+  plays silent, keep the request alive while its clip plays.
+- **Next step:** the owner merges PR #4 and publishes v0.2.4 (jMods syncs it). For new work after that, start a new branch from
+  `origin/main` (check the PR is still open before pushing more to its branch).
