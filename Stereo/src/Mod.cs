@@ -133,33 +133,8 @@ namespace HalfGripStereo
 				if (Deck.Active != null)
 				{
 					UnityEngine.Object.Destroy(Deck.Active.gameObject);
-					GameMusicBack();
 				}
 			});
-		}
-
-		/// <summary>
-		/// The stereo taken out during a race (the mod switched off, as speedrun mode does): the game's song was never started, so it is
-		/// started now, as the game would have (TrackManager.PlayRaceMusic, called straight to SoundController so this mod's patch, if
-		/// still in place, does not stop it).
-		/// </summary>
-		private static void GameMusicBack()
-		{
-			try
-			{
-				TrackManager tm = UnityEngine.Object.FindFirstObjectByType<TrackManager>();
-				if (tm == null || !tm.raceStarted || !tm.playRaceMusic || Deck.GameSong() != null)
-				{
-					return;
-				}
-				AudioClip pick = HarmonyLib.Traverse.Create(tm).Method("PickRaceSong").GetValue<AudioClip>();
-				SoundController.PlayMusic2D(pick, null, 1f, loop: true);
-				Info("Stereo: taken out mid-race; the game plays '" + (pick != null ? pick.name : "nothing") + "'");
-			}
-			catch (Exception e)
-			{
-				Log.LogWarning("Stereo: could not start the game's song again: " + e.Message);
-			}
 		}
 
 		private static GameObject fitter;

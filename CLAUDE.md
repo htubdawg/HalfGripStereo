@@ -82,6 +82,7 @@ next session has, so after **every** step that changes the state of things, this
   `FallingObject` (2D gravity, stuck/break-off), `BeerBottle`.
 - Hand sprites: under `MouseGrabber` (`Hand1_0`, ...), `SpriteLit` material; their sorting order is not in the dumps (the build logs it
   as `hand sorting a..b`; a loose disc draws at the wheel's order + 3).
+- **Speedrun mode does not let you use mods** (owner): no mid-race unload to handle; `ctx.OnUnload` only tidies up.
 - `MountSlot.ScriptOnly` puts an item's interior on the passive mount without occupying it (not used now; noted from the item idea).
 
 ## Owner's wishes
@@ -155,10 +156,10 @@ build once against the refs).
      the wrong disc. `Deck.DiscAdded` / `StereoDash.DiscAdded` shift them.
   3. A stereo **fitted after the countdown** took `RunState.ActiveMapMusic`, which is null for tutorials and random race songs: now the
      clip of the game's playing `2D_Music_` source (`Deck.GameSong`), then the map's.
-  4. The mod **unloaded mid-race** (speedrun mode switched on) left the race silent (the game's song had been skipped): `Mod` starts the
-     game's pick on unload (`GameMusicBack`).
+  A 4th fix (start the game's song again when the mod is unloaded mid-race by speedrun mode) was taken out again: the owner says
+  speedrun mode does not let you use mods at all, so that never happens (see *Game facts*).
   Checked: `tools/check.sh` against HalfGripTools 1.0.6 built from source (worked this session) and HalfGripRefs 0.419: compiles, no
-  warnings. Art unchanged, so no new previews. **Untested in game:** all four fixes.
+  warnings. Art unchanged, so no new previews. **Untested in game:** all three fixes.
 - **Open questions for the owner:** the sounds borrowed (`Grab1`, `Grab2`, `Reload`); should the music start before the countdown
   ends; the Open World (does it call `PlayRaceMusic`?); the Helicopter hides the wheel (the stereo is still placed from it).
 - **Untested guess:** MY songs load with `streamAudio` and the request is disposed after `GetContent`; if a MY song ever cuts out or
