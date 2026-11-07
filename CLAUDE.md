@@ -145,7 +145,7 @@ build once against the refs).
   fall speed (600 px/s²). The log's `vanishing point ... px from its corner` sets the right side's lean.
 - **README picture** (`docs/screenshot.jpg`): PR #2, merged. **README Install** (HalfGripMods installer first, by hand after): PR #3,
   merged (the installer link form is the other mods', not tried with this repo). If the lean ever needs tuning, `Stereo.Lean` changes it live.
-- **0.2.4** (jMods audit, PR on `claude/blissful-albattani-b0ecpx`): game 0.419, tools 1.0.6 (mod.json, README header and by-hand
+- **0.2.4** (jMods audit, PR #4 on `claude/blissful-albattani-b0ecpx`): game 0.419, tools 1.0.6 (mod.json, README header and by-hand
   step). 0.419 checked: `PlayRaceMusic`, `PickRaceSong`, `playRaceMusic`, `raceStarted`, `MusicGroup`, `ActiveMapMusic` unchanged; the
   songs in maps.txt the same. Bugs fixed:
   1. A **sound device change** (headphones plugged in) stops every source; the game restarts its own song (`SoundController.RestartMusic`),
@@ -163,5 +163,5 @@ build once against the refs).
   ends; the Open World (does it call `PlayRaceMusic`?); the Helicopter hides the wheel (the stereo is still placed from it).
 - **Untested guess:** MY songs load with `streamAudio` and the request is disposed after `GetContent`; if a MY song ever cuts out or
   plays silent, keep the request alive while its clip plays.
-- **Next step:** the owner merges the 0.2.4 PR and publishes v0.2.4 (jMods syncs it). For new work after that, start a new branch from
+- **Next step:** the owner merges PR #4 and publishes v0.2.4 (jMods syncs it). For new work after that, start a new branch from
   `origin/main` (check the PR is still open before pushing more to its branch).
