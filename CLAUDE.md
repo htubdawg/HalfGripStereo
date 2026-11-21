@@ -181,7 +181,7 @@ build once against the refs).
 - **Untested guess:** MY songs load with `streamAudio` and the request is disposed after `GetContent`; if a MY song ever cuts out or
   plays silent, keep the request alive while its clip plays.
 - **0.2.4** merged (PR #4). Publishing v0.2.4 is the owner's.
-- **0.3.0** (branch `claude/zen-ptolemy-tarels`, PR to `main`): the 0.3.0 wishes (see *Owner's wishes*) built. Unit 74 px wide, two
+- **0.3.0** (PR #5 on `claude/zen-ptolemy-tarels`): the 0.3.0 wishes (see *Owner's wishes*) built. Unit 74 px wide, two
   mirrored knobs, keys/eject/power gone (`Deck` has no power); `Scroll` turns a hovered knob; `KnobOverlap` moves the unit left so the
   right knob clears the wheel's grab circle (estimate from the dump: the unit's right edge about 0.9 units further left than 0.2.4,
   its left edge about 1.4 with the extra width); wallet pop-out; `Discs.Folder()` called in `Load`. Checked: `tools/check.sh`
