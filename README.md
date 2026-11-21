@@ -1,23 +1,27 @@
 # Car Stereo
 
-**Version 0.2.4** for Half Grip 0.419, a [HalfGripTools](https://github.com/4l3x4nd3r0/HalfGripTools) mod (1.0.6 or newer).
+**Version 0.3.0** for Half Grip 0.419, a [HalfGripTools](https://github.com/4l3x4nd3r0/HalfGripTools) mod (1.0.6 or newer).
 
 A CD stereo built into your car's cockpit. It sits left of the steering wheel, and a CD wallet hangs on the sun visor with one disc for
 each song of the game's soundtrack plus one disc, **MY**, that plays your own songs from a folder on your computer. You work it with
-the cockpit hand, like the shifter and the levers. No keys.
+the cockpit hand and the mouse wheel.
+
+**Mouse only:** the stereo can't be worked with a gamepad yet.
 
 ![The stereo and the CD wallet in the cockpit](docs/screenshot.jpg)
 
 ## Using it
 
-- **Put a disc in:** grab it by the crescent showing in the wallet on the visor, carry it to the stereo and let go: it slides into
-  the slot. Its sleeve stays empty while it's out.
-- **Take it out:** right click anywhere on the stereo (or click the eject key beside the slot). The disc comes half out of the slot;
-  grab it and drop it on the visor to put it away, or let it fall: once it's out of sight it's back in its sleeve. A disc dropped
-  anywhere but the stereo or the visor falls the same way. Dropping a new disc in swaps it for the one playing.
-- **Volume knob** (left of the display): grab it and turn it, clockwise for louder. The game's Music volume applies on top.
-- **Keys under the display:** power, previous, play / pause, next. On a soundtrack disc, previous and next change disc. On MY they
-  change song.
+- **Put a disc in:** point the hand at the wallet on the visor (the disc under it slides out a little), grab it, carry it to the
+  stereo and let go: it slides into the slot. Its sleeve stays empty while it's out.
+- **Left knob:** point the hand at it and turn the mouse wheel for the volume (up is louder). Click it to pause or play. The game's
+  Music volume applies on top.
+- **Right knob:** turn the mouse wheel over it for the next disc (up) or the previous one (down). On MY it changes song instead, and
+  after the last song it starts again from the first. Going back more than 3 seconds into a song starts that song again first, on
+  any disc.
+- **Take a disc out:** click the right knob. The disc comes half out of the slot; grab it and drop it on the visor to put it away,
+  or let it fall: once it's out of sight it's back in its sleeve. A disc dropped anywhere but the stereo or the visor falls the same
+  way. Dropping a new disc in swaps it for the one playing.
 
 The stereo replaces the race music. Until you pick a disc it plays the song the game would have played, so the race sounds as it
 always did. Once you pick a disc it stays in from race to race (until you quit the game).
@@ -27,7 +31,7 @@ is copied into the mod.
 
 ## Your own songs
 
-Put `.ogg`, `.mp3`, `.wav` or `.aiff` files in **`Music\Half Grip`** in your user folder (made the first time you play the MY disc),
+Put `.ogg`, `.mp3`, `.wav` or `.aiff` files in **`Music\Half Grip`** in your user folder (made when the game starts),
 or point `Music.Folder` in the config at any folder. They play in file name order, so number them (`01 ...`, `02 ...`) to set it, or
 turn on `Music.Shuffle`. The mod only reads that folder: it never writes to it or anywhere else.
 
@@ -67,7 +71,7 @@ repository download.
 | `Visor.ScreenX` / `ScreenY` | 0.3 / 0.87 | Where the wallet sits on the screen |
 | `Music.Folder` | (empty) | The MY disc's folder; empty is `Music\Half Grip` |
 | `Music.Shuffle` | false | Shuffle the MY disc |
-| `Music.Volume` | 7 | The volume knob (0 to 10), saved as you turn it |
+| `Music.Volume` | 7 | The left knob (0 to 10), saved as you turn it |
 | `Music.Loudness` | 1 | The stereo at full volume against the game's own music |
 | `Display.Lit` | true | Light the stereo like the cockpit; turn off if it doesn't show |
 | `Debug.VerboseLog` | false | Write what the stereo finds and does to `BepInEx\LogOutput.log` |

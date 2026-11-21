@@ -2,7 +2,7 @@
 
 A Half Grip (Steam app 4163270, Unity, Windows) mod: a CD stereo **built into every car's cockpit** (not a shop item, owner: it takes no
 item slot). A head unit left of the steering wheel and a CD wallet on the sun visor, one disc per soundtrack song plus **MY**, the
-player's own folder. Worked with the cockpit hand only. Current release: see `Stereo/mod.json`.
+player's own folder. Worked with the cockpit hand and the mouse wheel (no gamepad). Current release: see `Stereo/mod.json`.
 
 ## Always be ready for a context clear
 
@@ -35,14 +35,14 @@ next session has, so after **every** step that changes the state of things, this
 |---|---|
 | `Mod.cs` | Config (live re-read for placement), patches, the persistent `Fitter` object |
 | `Fitter.cs` | Twice a second: no stereo yet and a cockpit (`NSteeringWheel`'s parent, `CarInterior`) → adds a `Stereo` object with `Deck` + `StereoDash`. Skips scenes whose `TrackManager.playRaceMusic` is false (menu background race, credits) |
-| `Deck.cs` | Playback and the session's state (static: disc, chosen, power, pause, track, position): one `AudioSource` on the Music mixer group; soundtrack discs loop their song, next/prev change disc; MY loads each song off the disk (`UnityWebRequestMultimedia`, streamed), next/prev change song; the display's lines |
-| `Discs.cs` | The discs: the game's songs gathered from `Resources.Load` (race songs), every `MapDefinition.musicTrack/altMusicTrack` and loaded clips named `* OST`, at each scene load until all `Known` are found; duplicates (same samples) merged into one disc with aliases, logged; the MY folder |
+| `Deck.cs` | Playback and the session's state (static: disc, chosen, pause, track, position; no power since 0.3.0): one `AudioSource` on the Music mixer group; soundtrack discs loop their song, next/prev change disc; MY loads each song off the disk (`UnityWebRequestMultimedia`, streamed), next/prev change song, wrapping within MY; previous more than 3 s in restarts the song (every disc); the display's lines |
+| `Discs.cs` | The discs: the game's songs gathered from `Resources.Load` (race songs), every `MapDefinition.musicTrack/altMusicTrack` and loaded clips named `* OST`, at each scene load until all `Known` are found; duplicates (same samples) merged into one disc with aliases, logged; the MY folder (made at mod load, and again if `Music.Folder` names another) |
 | `RaceMusicPatch.cs` | Prefix on `TrackManager.PlayRaceMusic`: with a stereo, the game's pick (`PickRaceSong`, private) goes to `Deck.Go` and the game's song is not started |
-| `StereoDash.cs` | Builds the head unit (right edge 0.15 left of the wheel's rim, centre 0.5 above the wheel's, at the wheel's depth; radius from the sprite, not the turning bounds), drawn on its `Face` (the vanishing point = where the cockpit camera's middle ray meets the wheel's plane, `Vanish`, sets the right side's lean), and the visor (camera viewport point `Visor.ScreenX/Y` projected onto the wheel's plane); sprites pivot bottom left; the unit object at the face canvas's bottom left, everything placed in canvas pixels; cockpit pixel = median over cockpit sprites (fallback 0.05); lit casing = own copy of the wheel's material with `_BaseMap` set; the display unlit at 2x; keys = `StereoButton` (`Clickable`) on `InteriorSquareCollider`s at `sortingLayer` -100, 0.1 in front, a unit-wide one at -101 whose right click ejects (every key's right click too); the loose discs (`Loose`: sleeve → hand → slot / visor / fall → sleeve; `sticking` = disc half out of the slot, static) |
-| `Face.cs` | The head unit as drawn in the cockpit (managed, `tools/preview` draws it), after the **owner's mock-up**: square on, the flat layout from `Art` (64x28) at one pixel per pixel, top and bottom level; only the casing's two sides lean toward the camera's vanishing point (`Vanish`), the left by `Stereo.Lean` px over the height (default 3), the right in proportion to its distance from it; knob an ellipse 0.82 as wide; key signs 3x3; `Display` at 2x; slot geometry for discs (`SlotClip`, `SlotDiscWidth`, `DiscInRow`/`DiscOutRow`) |
-| `Hand.cs` | The game's `Grabbable` subclassed: `KnobGrab` (never moves; measures the hand's turn round its middle, `angle` follows so the grip point goes round; 270 degrees = 0..10), `SleeveGrab` (the wallet's sleeve; `grabRedirect` hands the Grabber a new loose disc), `DiscGrab` (follows the hand exactly, no tilt; falls with gravity in the cockpit's plane when let go; still while in the slot) |
+| `StereoDash.cs` | Builds the head unit (right edge 0.15 left of the wheel's sprite rim, then moved left until the right knob's box is 0.15 clear of the wheel's grab circle, `KnobOverlap`; centre 0.5 above the wheel's, at the wheel's depth), drawn on its `Face` (the vanishing point = where the cockpit camera's middle ray meets the wheel's plane, `Vanish`, sets the right side's lean), and the visor (camera viewport point `Visor.ScreenX/Y` projected onto the wheel's plane); sprites pivot bottom left; the unit object at the face canvas's bottom left, everything placed in canvas pixels; cockpit pixel = median over cockpit sprites (fallback 0.05); lit casing = own copy of the wheel's material with `_BaseMap` set; the display unlit at 2x; the two knobs = `StereoButton` (`Clickable`, left click only) on `InteriorSquareCollider`s at `sortingLayer` -100, 0.1 in front; `Scroll`: the mouse wheel while `Grabber.Hovered` is a knob's collider, one step per frame it moves (volume / `Deck.Skip`); no target on the casing (no right click); the wallet's hovered sleeve (`Grabber.Hovered` among `sleeveTargets`) drawn popped; the loose discs (`Loose`: sleeve → hand → slot / visor / fall → sleeve; `sticking` = disc half out of the slot, static) |
+| `Face.cs` | The head unit as drawn in the cockpit (managed, `tools/preview` draws it), after the **owner's mock-up**: square on, the flat layout from `Art` (74x28) at one pixel per pixel, top and bottom level; only the casing's two sides lean toward the camera's vanishing point (`Vanish`), the left by `Stereo.Lean` px over the height (default 3), the right in proportion to its distance from it; two knobs (`DrawKnob`), ellipses 0.82 as wide, the volume mark 7 to 5 o'clock, the seek mark a twelfth of a turn per notch; the CD badge under the display; `Display` at 2x; slot geometry for discs (`SlotClip`, `SlotDiscWidth`, `DiscInRow`/`DiscOutRow`) |
+| `Hand.cs` | The game's `Grabbable` subclassed (the grab-and-turn `KnobGrab` went in 0.3.0): `SleeveGrab` (the wallet's sleeve; `grabRedirect` hands the Grabber a new loose disc), `DiscGrab` (follows the hand exactly, no tilt; falls with gravity in the cockpit's plane when let go; still while in the slot) |
 | `Sounds.cs` | Borrowed clicks: `Grab1` (keys; quiet and high for each volume step), `Reload` at a higher pitch (disc in/out of the slot), `Grab2` (disc taken from a sleeve or the slot) |
-| `Art.cs` | Pixel art, managed only (so `tools/preview` draws it): `Canvas`, 3x5 font, `HeadUnit` (64x28 dash px: knob, display window, slot row 23 x 20-53, eject, 4 keys, CD badge), `Lcd` (amber on brown with ghost segments), `LooseDisc` (31 px, full-face label, number/MY, clipped below the slot, an oval of a given width in the slot), `VisorWallet` (overlapping sleeves cut in a curve, a 7 px crescent per disc, numbers under them; `DiscCorner`, `PocketPlace`), `DrawDisc`, `LabelFor` (map colours) |
+| `Art.cs` | Pixel art, managed only (so `tools/preview` draws it): `Canvas`, 3x5 font, `Part` (Volume, Seek) and `Place` (knob boxes, mirror images about x 37), `HeadUnit` (the flat 74x28 face via `Face` with no lean: two knobs, display window, slot row 23 x 20-53, CD badge), `Lcd` (amber on brown with ghost segments), `LooseDisc` (31 px, full-face label, number/MY, clipped below the slot, an oval of a given width in the slot), `VisorWallet` (overlapping sleeves cut in a curve, a 7 px crescent per disc, numbers under them, a hovered disc drawn `Pop` = 3 px right; `DiscCorner`, `PocketPlace`, `HoverPlace` = the hand's box, 10 px wide so it covers the popped disc and never moves), `DrawDisc`, `LabelFor` (map colours) |
 
 ## Rules that matter
 
@@ -82,6 +82,15 @@ next session has, so after **every** step that changes the state of things, this
   `FallingObject` (2D gravity, stuck/break-off), `BeerBottle`.
 - Hand sprites: under `MouseGrabber` (`Hand1_0`, ...), `SpriteLit` material; their sorting order is not in the dumps (the build logs it
   as `hand sorting a..b`; a loose disc draws at the wheel's order + 3).
+- **The wheel's grab area** (0.419 dump): `Steering` has an `InteriorCircleCollider` radius 0.44, `hitBoxExpand` 0.1, `sortingLayer`
+  0, scale 5.5; the Grabber widens the hit box by `Grabber.GrabTolerance` (a game setting, default 1.5): about 3.25 units round the
+  wheel's middle, well past its sprite (about 2.2). It wins over the stereo's -100, so anything of ours inside it can't be hovered.
+- **Mouse wheel:** the game reads it as `GameInput.mouseScrollDelta` (zero while the game mutes input; gamepads add `padScroll` only
+  in menus); in a race only the debug `OutsideCamera` zoom uses it; `LoadoutCarousel` steps once per frame it moves (we do the same).
+  `Grabber.Hovered` (public) is the hovered `InteriorCollider`, null while something is held. A Grabbable under the hand is grabbed on
+  a press and never clicked, so a clicked control must be a plain `Clickable`.
+- **Gamepad d-pad in a race** (`GamepadRunner.ReadLook`): left/right = look keys Q/E (and 1/3 on press), up = C (outside camera, drone
+  upgrade), down = look over the shoulder. All taken; the stereo has no gamepad controls (owner: skip for now, README says so).
 - **Speedrun mode does not let you use mods** (owner): no mid-race unload to handle; `ctx.OnUnload` only tidies up.
 - `MountSlot.ScriptOnly` puts an item's interior on the passive mount without occupying it (not used now; noted from the item idea).
 
@@ -112,6 +121,13 @@ next session has, so after **every** step that changes the state of things, this
   leans back a little: horizontal lines stay horizontal, only the sides run toward the vanishing point. 0.2.0-0.2.2 all slanted or
   converged the top and bottom edges instead: **never do that again.** The mock-up is the reference; match it, don't reinterpret it.
   When unsure about a look, ask the owner for a mock-up before building.
+- **0.3.0 wishes** (2026-11-21): MY folder made at the first start; the hovered wallet disc pops out **to the right** (as the wallet
+  is built); all keys go (nobody could use them, too small), the eject key too: a second knob on the right, the face otherwise the same
+  (**mirror the left half without keys**); knobs turned by the **scroll wheel** while hovered (no grab): left = volume, click pauses;
+  right = next/previous disc (song on MY, wrapping within MY), click ejects; the **3-second rule for every disc**; **no right-click
+  eject** on the body; the right knob **outside the wheel's grab area**; no gamepad for now, said in the README. Nobody hides the
+  wallet (`Visor.Shown`), so don't design around it. Keep discussion answers short and to the point: only ask what is the owner's to
+  decide, never raise points that aren't asked about.
 
 ## Checking changes
 
@@ -165,12 +181,12 @@ build once against the refs).
 - **Untested guess:** MY songs load with `streamAudio` and the request is disposed after `GetContent`; if a MY song ever cuts out or
   plays silent, keep the request alive while its clip plays.
 - **0.2.4** merged (PR #4). Publishing v0.2.4 is the owner's.
-- **0.3.0 being built** (owner's answers, 2026-11-21; branch `claude/zen-ptolemy-tarels`): MY folder made at boot; hovered wallet
-  disc pops out **to the right** (out of its sleeve's cut; its hit box stays put); all keys go (nobody could use them, too small; the
-  first one was a power key nobody knew of) and the eject key too; a second knob on the right, the face otherwise the same (**mirror
-  the left half without keys**); knobs turned by the scroll wheel while hovered, left knob volume + click pause/play, right knob
-  next/previous (disc, or song on MY) + click eject; the **3-second rule** (previous within 3 s goes back a disc/song, later restarts
-  the song) for **every** disc; **no right-click eject** anywhere on the body; the right knob **outside the wheel's grab area** (the
-  wheel takes priority over the radio's right side today); **no gamepad support** for now, said in the README (the d-pad is taken in a
-  race: up = outside camera, down = look over the shoulder). No hidden-wallet worries: nobody hides it.
-- **Next step:** build 0.3.0, previews, PR.
+- **0.3.0** (branch `claude/zen-ptolemy-tarels`, PR to `main`): the 0.3.0 wishes (see *Owner's wishes*) built. Unit 74 px wide, two
+  mirrored knobs, keys/eject/power gone (`Deck` has no power); `Scroll` turns a hovered knob; `KnobOverlap` moves the unit left so the
+  right knob clears the wheel's grab circle (estimate from the dump: the unit's right edge about 0.9 units further left than 0.2.4,
+  its left edge about 1.4 with the extra width); wallet pop-out; `Discs.Folder()` called in `Load`. Checked: `tools/check.sh`
+  (HalfGripTools 1.0.6 from source, refs 0.419): compiles, no warnings; previews (`docs/unit-face.png`, `Stereo/icon.png` re-made;
+  the visor preview shows disc 4 popped). **Untested in game:** all of it: does the scroll reach the knobs (log `wheel's grab area`,
+  `right knob's nearest point`), the step per frame (a fast flick may skip several discs), whether the stereo now sits too far left
+  (`Stereo.OffsetX` moves it, but the right knob then may fall in the wheel's area again), the pop-out's size.
+- **Next step:** the owner tests 0.3.0 in game and merges the PR.
