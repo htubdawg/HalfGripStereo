@@ -992,7 +992,8 @@ namespace HalfGripStereo
 			// The sleeve the hand hovers: its disc stands out (none while the hand holds something: the Grabber hovers nothing then).
 			InteriorCollider over = hand != null ? hand.Hovered : null;
 			hoveredSleeve = over != null ? sleeveTargets.IndexOf(over) : -1;
-			string key = Discs.All.Count + "|" + hoveredSleeve + "|";
+			int pop = Mathf.Clamp(Mod.PopOut.Value, 0, 16);
+			string key = Discs.All.Count + "|" + hoveredSleeve + "|" + pop + "|";
 			for (int i = 0; i < Discs.All.Count; i++)
 			{
 				key += IsOut(i) ? "o" : "i";
@@ -1013,7 +1014,7 @@ namespace HalfGripStereo
 					sleeves[i].SetActive(!gone);
 				}
 			}
-			visorTexture.SetPixels32(Art.VisorWallet(looks).Px);
+			visorTexture.SetPixels32(Art.VisorWallet(looks, pop).Px);
 			visorTexture.Apply(false);
 		}
 

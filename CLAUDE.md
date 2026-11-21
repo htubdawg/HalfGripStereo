@@ -42,7 +42,7 @@ next session has, so after **every** step that changes the state of things, this
 | `Face.cs` | The head unit as drawn in the cockpit (managed, `tools/preview` draws it), after the **owner's mock-up**: square on, the flat layout from `Art` (74x28) at one pixel per pixel, top and bottom level; only the casing's two sides lean toward the camera's vanishing point (`Vanish`), the left by `Stereo.Lean` px over the height (default 3), the right in proportion to its distance from it; two knobs (`DrawKnob`), ellipses 0.82 as wide, the volume mark 7 to 5 o'clock, the seek mark a twelfth of a turn per notch; the CD badge under the display; `Display` at 2x; slot geometry for discs (`SlotClip`, `SlotDiscWidth`, `DiscInRow`/`DiscOutRow`) |
 | `Hand.cs` | The game's `Grabbable` subclassed (the grab-and-turn `KnobGrab` went in 0.3.0): `SleeveGrab` (the wallet's sleeve; `grabRedirect` hands the Grabber a new loose disc), `DiscGrab` (follows the hand exactly, no tilt; falls with gravity in the cockpit's plane when let go; still while in the slot) |
 | `Sounds.cs` | Borrowed clicks: `Grab1` (keys; quiet and high for each volume step), `Reload` at a higher pitch (disc in/out of the slot), `Grab2` (disc taken from a sleeve or the slot) |
-| `Art.cs` | Pixel art, managed only (so `tools/preview` draws it): `Canvas`, 3x5 font, `Part` (Volume, Seek) and `Place` (knob boxes, mirror images about x 37), `HeadUnit` (the flat 74x28 face via `Face` with no lean: two knobs, display window, slot row 23 x 20-53, CD badge), `Lcd` (amber on brown with ghost segments), `LooseDisc` (31 px, full-face label, number/MY, clipped below the slot, an oval of a given width in the slot), `VisorWallet` (overlapping sleeves cut in a curve, a 7 px crescent per disc, numbers under them, a hovered disc drawn `Pop` = 3 px right; `DiscCorner`, `PocketPlace`, `HoverPlace` = the hand's box, 10 px wide so it covers the popped disc and never moves), `DrawDisc`, `LabelFor` (map colours) |
+| `Art.cs` | Pixel art, managed only (so `tools/preview` draws it): `Canvas`, 3x5 font, `Part` (Volume, Seek) and `Place` (knob boxes, mirror images about x 37), `HeadUnit` (the flat 74x28 face via `Face` with no lean: two knobs, display window, slot row 23 x 20-53, CD badge), `Lcd` (amber on brown with ghost segments), `LooseDisc` (31 px, full-face label, number/MY, clipped below the slot, an oval of a given width in the slot), `VisorWallet` (overlapping sleeves cut in a curve, a 7 px crescent per disc, numbers under them, a hovered disc drawn `Visor.PopOut` px right (default 8; the last one drawn again over the wallet's right edge; **the wallet never widens**); `DiscCorner`, `PocketPlace`, `HoverPlace` = the hand's box, 10 px wide so it covers the popped disc and never moves), `DrawDisc`, `LabelFor` (map colours) |
 
 ## Rules that matter
 
@@ -128,6 +128,8 @@ next session has, so after **every** step that changes the state of things, this
   eject** on the body; the right knob **outside the wheel's grab area**; no gamepad for now, said in the README. Nobody hides the
   wallet (`Visor.Shown`), so don't design around it. Keep discussion answers short and to the point: only ask what is the owner's to
   decide, never raise points that aren't asked about.
+- After the 0.3.0 build: **`Stereo.OffsetX` default 0.4** (owner's value; migration 3 moves an untouched 0 to 0.4); the disc pops out
+  **further** (8 px), as a setting (`Visor.PopOut`). The wallet's size stays as it is: never widen it for the pop-out.
 
 ## Checking changes
 
@@ -189,4 +191,8 @@ build once against the refs).
   the visor preview shows disc 4 popped). **Untested in game:** all of it: does the scroll reach the knobs (log `wheel's grab area`,
   `right knob's nearest point`), the step per frame (a fast flick may skip several discs), whether the stereo now sits too far left
   (`Stereo.OffsetX` moves it, but the right knob then may fall in the wheel's area again), the pop-out's size.
+- **0.3.0 follow-up** (same PR): `Stereo.OffsetX` default 0.4 with migration (config version 3); `Visor.PopOut` (default 8, 0..16,
+  live). Checked: compiles, no warnings; `tools/preview` `visor-4x.png` (disc 4 out 8 px) and `visor-last-4x.png` (the last disc out
+  past the wallet's edge, drawn over it cleanly). Untested in game. Note: with OffsetX 0.4 the right knob may sit inside the wheel's
+  grab area again (the log's `right knob's nearest point` against `wheel's grab area`); the owner chose the value in game.
 - **Next step:** the owner tests 0.3.0 in game and merges the PR.

@@ -65,10 +65,11 @@ repository download.
 | Setting | Default | |
 |---|---|---|
 | `Stereo.Enabled` | true | Off: no stereo, the game's own music |
-| `Stereo.OffsetX` / `OffsetY` | 0 | Move the stereo (cockpit units, a cockpit pixel is about 0.05) |
+| `Stereo.OffsetX` / `OffsetY` | 0.4 / 0 | Move the stereo (cockpit units, a cockpit pixel is about 0.05) |
 | `Stereo.Lean` | 3 | How far the stereo's left side leans right over its height, in cockpit pixels (its sides run toward the middle of the view, the face stays square on; 0 a plain rectangle) |
 | `Visor.Shown` | true | The CD wallet on the visor |
 | `Visor.ScreenX` / `ScreenY` | 0.3 / 0.87 | Where the wallet sits on the screen |
+| `Visor.PopOut` | 8 | How far the disc under the hand comes out of the wallet (cockpit pixels, 0 to 16) |
 | `Music.Folder` | (empty) | The MY disc's folder; empty is `Music\Half Grip` |
 | `Music.Shuffle` | false | Shuffle the MY disc |
 | `Music.Volume` | 7 | The left knob (0 to 10), saved as you turn it |

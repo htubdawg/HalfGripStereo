@@ -315,18 +315,13 @@ namespace HalfGripStereo
 			public string Mark;
 			/// <summary>The disc is not in its sleeve (in the stereo, in the hand): the sleeve is empty.</summary>
 			public bool Out;
-			/// <summary>The hand hovers its sleeve: the disc stands <see cref="Pop"/> pixels out of its sleeve's cut, to the right.</summary>
+			/// <summary>The hand hovers its sleeve: the disc stands out of its sleeve's cut, to the right (Visor.PopOut pixels).</summary>
 			public bool Hovered;
 		}
 
 		/// <summary>Columns from one disc to the next, and how much of each disc shows past its sleeve's cut.</summary>
 		internal const int DiscPitch = 10;
 		internal const int Crescent = 7;
-		/// <summary>
-		/// How far a hovered disc comes out to the right. 3 keeps the last disc inside the wallet's edge (it ends 4 pixels short of it);
-		/// the hand's box for each disc (<see cref="HoverPlace"/>) already reaches over the popped part, so it never flickers.
-		/// </summary>
-		internal const int Pop = 3;
 		/// <summary>The front panel's width left of the first disc.</summary>
 		private const int Lead = 18;
 		private const int WalletLeft = 5;
@@ -350,8 +345,7 @@ namespace HalfGripStereo
 
 		/// <summary>
 		/// The hand's box for disc <paramref name="i"/>: its <see cref="PocketPlace"/> widened right to the next disc's (one
-		/// <see cref="DiscPitch"/> wide), so it covers the disc popped out (<see cref="Pop"/>) as well; the boxes do not overlap, and the
-		/// box does not move when the disc pops, so the hand never slips off it.
+		/// <see cref="DiscPitch"/> wide); the boxes do not overlap, and a box does not move when its disc pops, so it never flickers.
 		/// </summary>
 		internal static RectInt HoverPlace(int i)
 		{
@@ -363,7 +357,8 @@ namespace HalfGripStereo
 		/// The sun visor, folded up against the roof, with the wallet strapped round it. A disc that is out leaves its sleeve empty and
 		/// dark. Drawn back to front: each disc, then its sleeve over it, from the last (at the back, on the right) to the first.
 		/// </summary>
-		internal static Canvas VisorWallet(IList<DiscLook> discs)
+		/// <param name="pop">How far a hovered disc comes out of its sleeve to the right, in pixels.</param>
+		internal static Canvas VisorWallet(IList<DiscLook> discs, int pop)
 		{
 			int n = Mathf.Max(1, discs.Count);
 			int w = VisorWidth(n), h = VisorHeight;
@@ -403,7 +398,7 @@ namespace HalfGripStereo
 				else
 				{
 					// A hovered disc slides out of its sleeve's cut, to the right, over the next sleeve; the sleeve itself stays put.
-					DrawDisc(c, cx + (d.Hovered ? Pop : 0), cy, DiscRadius, d.Label);
+					DrawDisc(c, cx + (d.Hovered ? pop : 0), cy, DiscRadius, d.Label);
 				}
 				// The sleeve: everything left of its cut, the cut a circle the disc's size moved left by the crescent.
 				float sx = cx - Crescent;
@@ -435,6 +430,26 @@ namespace HalfGripStereo
 			}
 			c.Rect(wx0, wy0, wx0, wy1, WalletEdge);
 			c.Rect(wx1, wy0, wx1, wy1, WalletEdge);
+			// A hovered last disc pulled out far enough sticks out past the wallet's right edge: drawn again over the edge and the
+			// visor beyond it (no sleeve reaches there), so it is not cut by the edge.
+			int last = n - 1;
+			if (last < discs.Count && discs[last].Hovered && !discs[last].Out)
+			{
+				Vector2Int corner = DiscCorner(last);
+				Canvas over = new Canvas(w, h);
+				DrawDisc(over, corner.x + DiscRadius - 0.5f + pop, corner.y + DiscRadius - 0.5f, DiscRadius, discs[last].Label);
+				for (int y = 0; y < h; y++)
+				{
+					for (int x = wx1; x < w; x++)
+					{
+						Color32 p = over.Get(x, y);
+						if (p.a > 0)
+						{
+							c.Set(x, y, p);
+						}
+					}
+				}
+			}
 			int px0 = wx0 + 3, px1 = wx0 + Lead + 1, py1 = wy0 + 20;
 			c.Rect(px0, wy0 + 3, px1, py1, WalletEdge);
 			c.Rect(px0 + 1, wy0 + 3, px1 - 1, py1 - 1, Wallet);
