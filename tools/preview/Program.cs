@@ -10,7 +10,7 @@ namespace HalfGripStereo
 	///   dotnet run -c Release --project tools/preview [-p:Refs=&lt;HalfGripRefs&gt;] -- &lt;out dir&gt;
 	/// writes, at one pixel per cockpit pixel (for laying over a screenshot) and 4x:
 	///   unit.png / unit-4x.png    the head unit with its display (the display at its own double resolution in the 4x one)
-	///   visor.png / visor-4x.png  the CD wallet with seven discs, the second in the stereo, the fourth hovered (popped out by the default Visor.PopOut, 8)
+	///   visor.png / visor-4x.png  the CD wallet with seven discs, the second in the stereo, the fourth hovered (popped out by the default Visor.PopOut, 12)
 	///   visor-last-4x.png         the same with the last disc hovered (out past the wallet's edge)
 	///   icon.png                  the mod's picture, 128x128 (copy to Stereo/icon.png)
 	/// </summary>
@@ -48,7 +48,7 @@ namespace HalfGripStereo
 				// The fourth hovered by the hand: it stands out of its sleeve.
 				looks.Add(new Art.DiscLook { Label = Art.LabelFor(titles[i]), Mark = titles[i] == "MIX" ? "MY" : null, Out = i == 1, Hovered = i == 3 });
 			}
-			Art.Canvas visor = Art.VisorWallet(looks, 8);
+			Art.Canvas visor = Art.VisorWallet(looks, 12);
 			Png.Save(Path.Combine(dir, "visor.png"), visor.Px, visor.W, visor.H, 1);
 			Png.Save(Path.Combine(dir, "visor-4x.png"), visor.Px, visor.W, visor.H, 4);
 			// The last disc hovered: pulled out past the wallet's right edge.
@@ -58,7 +58,7 @@ namespace HalfGripStereo
 				l.Hovered = i == looks.Count - 1;
 				looks[i] = l;
 			}
-			Art.Canvas visorLast = Art.VisorWallet(looks, 8);
+			Art.Canvas visorLast = Art.VisorWallet(looks, 12);
 			Png.Save(Path.Combine(dir, "visor-last-4x.png"), visorLast.Px, visorLast.W, visorLast.H, 4);
 
 			// The mod's picture: the head unit with a disc going in, on 64x64, shown at 128.

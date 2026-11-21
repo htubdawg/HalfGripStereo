@@ -114,7 +114,7 @@ namespace HalfGripStereo
 			ShowVisor = ctx.Config.Bind("Visor", "Shown", true, "Show the CD wallet on the sun visor. Off, the stereo's right knob still changes disc.");
 			VisorX = ctx.Config.Bind("Visor", "ScreenX", 0.3f, new ConfigDescription("Where the CD wallet's middle is across the screen (0 left edge, 1 right edge). Takes effect as soon as the file is saved.", new AcceptableValueRange<float>(0f, 1f)));
 			VisorY = ctx.Config.Bind("Visor", "ScreenY", 0.87f, new ConfigDescription("Where the CD wallet's middle is up the screen (0 bottom, 1 top). Takes effect as soon as the file is saved.", new AcceptableValueRange<float>(0f, 1f)));
-			PopOut = ctx.Config.Bind("Visor", "PopOut", 8, new ConfigDescription("How far the disc under the hand comes out of its sleeve in the CD wallet, to the right, in cockpit pixels (0: it doesn't). Takes effect as soon as the file is saved.", new AcceptableValueRange<int>(0, 16)));
+			PopOut = ctx.Config.Bind("Visor", "PopOut", 12, new ConfigDescription("How far the disc under the hand comes out of its sleeve in the CD wallet, to the right, in cockpit pixels (0: it doesn't). Takes effect as soon as the file is saved.", new AcceptableValueRange<int>(0, 16)));
 			LitParts = ctx.Config.Bind("Display", "Lit", true, "Light the stereo and the visor like the rest of the cockpit. Turn it off if they do not show.");
 			Verbose = ctx.Config.Bind("Debug", "VerboseLog", false, "Write what the stereo finds and does (songs, placing, discs) to the BepInEx log.");
 			ConfigVersion = ctx.Config.Bind("Debug", "ConfigVersion", 0, "The settings' layout, for moving old values on once. Leave it alone.");
