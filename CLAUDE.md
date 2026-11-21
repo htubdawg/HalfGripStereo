@@ -143,7 +143,7 @@ build once against the refs).
   ```
 - Pictures: `dotnet run -c Release --project tools/preview -p:Refs=<halfgriprefs> -- <out dir>` writes `unit.png`/`visor.png` (one
   pixel per cockpit pixel, for laying over a screenshot at ~4.3x on 1080p), `unit-4x.png`, `visor-4x.png`, `unit-face-4x.png` / `unit-face-disc-4x.png` (on its `Face` as the game builds it, a disc half out in the second; the vanishing point in cockpit px from the face's corner as the optional 2nd and 3rd arguments, default 201 137, then `Stereo.Lean`, default 3; copy the second to `docs/unit-face.png`), `unit-flat-4x.png` (`Stereo.Lean` 0), `disc-4x.png`, `icon.png` (copy to
-  `Stereo/icon.png`). `docs/screenshot.jpg` is the README's picture: the owner's own in-game screenshot of 0.2.3 (Forest).
+  `Stereo/icon.png`). `docs/screenshot.jpg` is the README's picture: the owner's own in-game screenshot of 0.3.0 (night, two knobs, the wallet).
 - Game code: `DOTNET_ROLL_FORWARD=Major ilspycmd -p -o <dir> <refs>/game/HalfGrip_Data/Managed/Assembly-CSharp.dll`.
 - In game (the owner tests): copy `Stereo/` to `<game>\BepInEx\HalfGripMods\`, `Debug.VerboseLog=true`, read `BepInEx\LogOutput.log`
   (look for `found the song`, `same song as`, `put in the cockpit`, `head unit at`, `CD wallet with`, `the race starts`).
@@ -201,4 +201,8 @@ build once against the refs).
 - **Release workflow** (`.github/workflows/release.yml`, owner's ask): Actions -> Release -> Run workflow on `main`; version from
   `Stereo/mod.json`, fails if the README's `**Version x**` differs or tag `v<version>` exists; zips `Stereo/` as `Stereo-v<version>.zip`,
   tags, makes the release (generated notes, optional pre-release). Can't compile (no game DLLs in CI). Not run yet (no tags exist).
-- **Next step:** the owner tests 0.3.0 in game and merges the PR.
+- **0.3.0 merged** (PR #5). **Owner's in-game screenshot of 0.3.0** (1080p, night map): the two-knob radio left of the wheel with
+  `CD2 / NEON` on the display, clear of the wheel, the wallet on the visor; the owner made it the README's picture (`docs/screenshot.jpg`,
+  converted from their webp), so the 0.3.0 look and the `OffsetX` 0.4 place are accepted. New PR for it from `main`
+  (branch `claude/zen-ptolemy-tarels` restarted on `origin/main`).
+- **Next step:** the owner merges the screenshot PR and runs the Release workflow for v0.3.0.
