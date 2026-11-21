@@ -200,9 +200,11 @@ build once against the refs).
   the visor's own width. Checked: `visor-last-4x.png` (12) and `visor-last-max-4x.png` (16) whole.
 - **Release workflow** (`.github/workflows/release.yml`, owner's ask): Actions -> Release -> Run workflow on `main`; version from
   `Stereo/mod.json`, fails if the README's `**Version x**` differs or tag `v<version>` exists; zips `Stereo/` as `Stereo-v<version>.zip`,
-  tags, makes the release (generated notes, optional pre-release). Can't compile (no game DLLs in CI). Not run yet (no tags exist).
+  tags, makes the release (generated notes, optional pre-release). Can't compile (no game DLLs in CI). Ran fine for v0.3.0.
 - **0.3.0 merged** (PR #5). **Owner's in-game screenshot of 0.3.0** (1080p, night map): the two-knob radio left of the wheel with
   `CD2 / NEON` on the display, clear of the wheel, the wallet on the visor; the owner made it the README's picture (`docs/screenshot.jpg`,
   converted from their webp), so the 0.3.0 look and the `OffsetX` 0.4 place are accepted. New PR for it from `main`
   (branch `claude/zen-ptolemy-tarels` restarted on `origin/main`).
-- **Next step:** the owner merges the screenshot PR and runs the Release workflow for v0.3.0.
+- **v0.3.0 released** (screenshot PR #6 merged): the Release workflow's first run (run 1, from `main`) succeeded: tag `v0.3.0`,
+  release "Car Stereo 0.3.0" with `Stereo-v0.3.0.zip` (41 KB) and generated notes (PRs #5, #6, since `v0.2.4`). The workflow works.
+- **Next step:** nothing pending; the owner's in-game feedback on 0.3.0 (scroll step per frame, pop-out size) if any.
