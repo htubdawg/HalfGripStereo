@@ -164,5 +164,16 @@ build once against the refs).
   ends; the Open World (does it call `PlayRaceMusic`?); the Helicopter hides the wheel (the stereo is still placed from it).
 - **Untested guess:** MY songs load with `streamAudio` and the request is disposed after `GetContent`; if a MY song ever cuts out or
   plays silent, keep the request alive while its clip plays.
-- **Next step:** the owner merges PR #4 and publishes v0.2.4 (jMods syncs it). For new work after that, start a new branch from
-  `origin/main` (check the PR is still open before pushing more to its branch).
+- **0.2.4** merged (PR #4). Publishing v0.2.4 is the owner's.
+- **Owner's wishes for 0.3.0** (2026-11-21, being discussed, nothing built yet; branch `claude/zen-ptolemy-tarels` from `main`):
+  1. Make the MY folder at the first boot (now `Discs.Folder()` makes it only when MY is first played).
+  2. Hovering the CD wallet: the disc under the hand pops out slightly, so the player sees which they will grab.
+  3. The keys replaced by a second knob; both knobs turned with the **scroll wheel** (no grab). Left knob: volume, left click
+     pauses/plays. Right knob: seek (next disc, or next song on MY), left click ejects. MY's end wraps to its own first song:
+     checked in code (`Deck.Skip` and the end-of-song advance both go modulo the folder's songs), it never moves to the next disc.
+  Found while looking: the game reads the wheel as `GameInput.mouseScrollDelta` (zero while the game mutes input; gamepads add
+  `padScroll` only from the menu pointer); in a race only the debug `OutsideCamera` zoom reads it. `Grabber.Hovered` (public) is the
+  `InteriorCollider` the hand hovers: use it for the wallet's pop-out and for scrolling a knob. A knob must stop being a `Grabbable`
+  (the Grabber grabs a Grabbable on a press and never clicks it). Open points put to the owner: pop direction/size, the Power key's
+  fate, a mock-up of the two-knob face, debounced seeking, right click, gamepad, the visor-off case (MY can't be left).
+- **Next step:** the owner's answers on the open points, then build 0.3.0.
