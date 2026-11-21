@@ -10,7 +10,9 @@ namespace HalfGripStereo
 	///   dotnet run -c Release --project tools/preview [-p:Refs=&lt;HalfGripRefs&gt;] -- &lt;out dir&gt;
 	/// writes, at one pixel per cockpit pixel (for laying over a screenshot) and 4x:
 	///   unit.png / unit-4x.png    the head unit with its display (the display at its own double resolution in the 4x one)
-	///   visor.png / visor-4x.png  the CD wallet with seven discs, the second in the stereo
+	///   visor.png / visor-4x.png  the CD wallet with seven discs, the second in the stereo, the fourth hovered (popped out by the default Visor.PopOut, 12)
+	///   visor-last-4x.png         the same with the last disc hovered (out past the wallet's edge)
+	///   visor-last-max-4x.png     the last disc out by the most Visor.PopOut allows (16)
 	///   icon.png                  the mod's picture, 128x128 (copy to Stereo/icon.png)
 	/// </summary>
 	internal static class Program
@@ -20,7 +22,7 @@ namespace HalfGripStereo
 			string dir = args.Length > 0 ? args[0] : "preview-out";
 			Directory.CreateDirectory(dir);
 
-			Art.Canvas unit = Unit(Art.Part.Play, "CD2 ▶ 1:23", "NEON", 1);
+			Art.Canvas unit = Unit(null, "CD2 ▶ 1:23", "NEON", 1);
 			Png.Save(Path.Combine(dir, "unit.png"), Half(unit), Art.UnitWidth, Art.UnitHeight, 1);
 			Png.Save(Path.Combine(dir, "unit-4x.png"), unit.Px, unit.W, unit.H, 2);
 
@@ -44,11 +46,23 @@ namespace HalfGripStereo
 			List<Art.DiscLook> looks = new List<Art.DiscLook>();
 			for (int i = 0; i < titles.Length; i++)
 			{
-				looks.Add(new Art.DiscLook { Label = Art.LabelFor(titles[i]), Mark = titles[i] == "MIX" ? "MY" : null, Out = i == 1 });
+				// The fourth hovered by the hand: it stands out of its sleeve.
+				looks.Add(new Art.DiscLook { Label = Art.LabelFor(titles[i]), Mark = titles[i] == "MIX" ? "MY" : null, Out = i == 1, Hovered = i == 3 });
 			}
-			Art.Canvas visor = Art.VisorWallet(looks);
+			Art.Canvas visor = Art.VisorWallet(looks, 12);
 			Png.Save(Path.Combine(dir, "visor.png"), visor.Px, visor.W, visor.H, 1);
 			Png.Save(Path.Combine(dir, "visor-4x.png"), visor.Px, visor.W, visor.H, 4);
+			// The last disc hovered: pulled out past the wallet's right edge.
+			for (int i = 0; i < looks.Count; i++)
+			{
+				Art.DiscLook l = looks[i];
+				l.Hovered = i == looks.Count - 1;
+				looks[i] = l;
+			}
+			Art.Canvas visorLast = Art.VisorWallet(looks, 12);
+			Png.Save(Path.Combine(dir, "visor-last-4x.png"), visorLast.Px, visorLast.W, visorLast.H, 4);
+			Art.Canvas visorMax = Art.VisorWallet(looks, Art.MaxPop);
+			Png.Save(Path.Combine(dir, "visor-last-max-4x.png"), visorMax.Px, visorMax.W, visorMax.H, 4);
 
 			// The mod's picture: the head unit with a disc going in, on 64x64, shown at 128.
 			Art.Canvas icon = new Art.Canvas(64, 64);
@@ -57,8 +71,9 @@ namespace HalfGripStereo
 			Color32[] half = Half(small);
 			Art.Canvas u = new Art.Canvas(Art.UnitWidth, Art.UnitHeight);
 			Array.Copy(half, u.Px, half.Length);
-			// Hide the disc's lower half inside the stereo: the stereo is drawn over it from the slot down.
-			icon.Paste(u, 1, 8);
+			// Hide the disc's lower half inside the stereo: the stereo is drawn over it from the slot down. The unit (74) is wider than
+			// the icon: centred, the knobs' outer edges are cut off.
+			icon.Paste(u, (64 - Art.UnitWidth) / 2, 8);
 			Png.Save(Path.Combine(dir, "icon.png"), icon.Px, 64, 64, 2);
 			Console.WriteLine("written to " + Path.GetFullPath(dir));
 			return 0;
@@ -67,7 +82,7 @@ namespace HalfGripStereo
 		/// <summary>The head unit at twice its size (the display's resolution), with the display laid in its window.</summary>
 		private static Art.Canvas Unit(Art.Part? pressed, string top, string bottom, float knob)
 		{
-			Art.Canvas casing = Art.HeadUnit(pressed, true, 0.7f);
+			Art.Canvas casing = Art.HeadUnit(pressed, 0.7f, 0);
 			int d = Art.LcdDetail;
 			Art.Canvas big = new Art.Canvas(casing.W * d, casing.H * d);
 			for (int y = 0; y < big.H; y++)
@@ -93,7 +108,7 @@ namespace HalfGripStereo
 		private static Art.Canvas OnFace(Face face, string top, string bottom, bool disc)
 		{
 			int d = Art.LcdDetail, pad = 4, above = disc ? 24 : 0;
-			Art.Canvas casing = face.Casing(null, true, 0.7f);
+			Art.Canvas casing = face.Casing(null, 0.7f, 0);
 			Art.Canvas big = new Art.Canvas((casing.W + 2 * pad) * d, (casing.H + 2 * pad + above) * d);
 			void Blit(Art.Canvas src, int x0, int y0, int scale)
 			{
