@@ -404,7 +404,8 @@ namespace HalfGripStereo
 			visor = Part("StereoVisor", transform, corner);
 			Vector3 inUnit = corner - unit.transform.localPosition;
 			visorBox = new Rect(inUnit.x, inUnit.y, vw * texel, vh * texel);
-			visorTexture = MakeTexture(vw, vh, "StereoVisor");
+			// The picture is wider than the visor (Art.Spill, clear) so a popped last disc shows whole; placing and dropping use the visor's own width.
+			visorTexture = MakeTexture(Art.VisorCanvasWidth(n), vh, "StereoVisor");
 			Sprite(visor, "Wallet", visorTexture, Vector3.zero, lit, 0);
 			sleeves.Clear();
 			sleeveTargets.Clear();
@@ -992,7 +993,7 @@ namespace HalfGripStereo
 			// The sleeve the hand hovers: its disc stands out (none while the hand holds something: the Grabber hovers nothing then).
 			InteriorCollider over = hand != null ? hand.Hovered : null;
 			hoveredSleeve = over != null ? sleeveTargets.IndexOf(over) : -1;
-			int pop = Mathf.Clamp(Mod.PopOut.Value, 0, 16);
+			int pop = Mathf.Clamp(Mod.PopOut.Value, 0, Art.MaxPop);
 			string key = Discs.All.Count + "|" + hoveredSleeve + "|" + pop + "|";
 			for (int i = 0; i < Discs.All.Count; i++)
 			{

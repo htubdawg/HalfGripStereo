@@ -1,0 +1,77 @@
+# Publishes a release of the mod: Actions tab -> Release -> Run workflow (on main).
+#
+# The version comes from Stereo/mod.json, so bump it (and the README's) in the release's PR first. The workflow checks the two agree
+# and that the version has not been released yet, zips the Stereo folder (Stereo/mod.json inside the zip, ready to drop into
+# <game>\BepInEx\HalfGripMods\), tags the commit v<version> and makes the GitHub release with the zip and notes from the merged PRs.
+#
+# It cannot compile the mod: that needs the game's DLLs (the private HalfGripRefs). Check with tools/check.sh before merging.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: Mark it as a pre-release
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read and check the version
+        id: version
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF_NAME" != "main" ]; then
+            echo "::error::Run the release from main (this run is on $GITHUB_REF_NAME)."
+            exit 1
+          fi
+          version=$(jq -r .version Stereo/mod.json)
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Stereo/mod.json has no version like 1.2.3 (found '$version')."
+            exit 1
+          fi
+          if ! grep -q "\*\*Version $version\*\*" README.md; then
+            echo "::error::README.md does not say **Version $version**: bump it with mod.json."
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "::error::v$version is already released: bump the version in Stereo/mod.json and README.md."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Zip the Stereo folder
+        run: |
+          set -euo pipefail
+          zip -r -X "Stereo-v${{ steps.version.outputs.version }}.zip" Stereo
+          unzip -l "Stereo-v${{ steps.version.outputs.version }}.zip"
+
+      - name: Make the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -euo pipefail
+          game=$(jq -r .gameVersion Stereo/mod.json)
+          tools=$(jq -r .tools Stereo/mod.json)
+          notes="For Half Grip $game with HalfGripTools $tools or newer. Install: see the README (the HalfGripMods installer, or copy the Stereo folder from the zip into \`<game>\\BepInEx\\HalfGripMods\\\`)."
+          flags=()
+          if [ "$PRERELEASE" = "true" ]; then
+            flags+=(--prerelease)
+          fi
+          gh release create "v$VERSION" "Stereo-v$VERSION.zip" \
+            --target "$GITHUB_SHA" \
+            --title "Car Stereo $VERSION" \
+            --notes "$notes" \
+            --generate-notes \
+            "${flags[@]}"

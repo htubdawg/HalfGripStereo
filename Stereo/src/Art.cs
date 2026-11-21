@@ -330,6 +330,18 @@ namespace HalfGripStereo
 		private const int NumberRows = 7;
 		internal const int VisorHeight = WalletBottom + NumberRows + DiscSize + 2 + 4;
 
+		/// <summary>The most a hovered disc comes out (the top of Visor.PopOut's range).</summary>
+		internal const int MaxPop = 16;
+
+		/// <summary>
+		/// Clear columns right of the visor in its picture, so the last disc pulled out by up to <see cref="MaxPop"/> is drawn whole
+		/// past the visor's end (the visor itself never widens): the last disc's right edge is 8 columns short of the visor's end.
+		/// </summary>
+		internal const int Spill = MaxPop - 8;
+
+		/// <summary>The visor picture's width: the visor and the clear <see cref="Spill"/> right of it.</summary>
+		internal static int VisorCanvasWidth(int discs) => VisorWidth(discs) + Spill;
+
 		/// <summary>The visor's width for <paramref name="discs"/> discs.</summary>
 		internal static int VisorWidth(int discs) => WalletLeft + Lead + (Mathf.Max(1, discs) - 1) * DiscPitch + DiscSize + 4 + WalletLeft;
 
@@ -361,8 +373,9 @@ namespace HalfGripStereo
 		internal static Canvas VisorWallet(IList<DiscLook> discs, int pop)
 		{
 			int n = Mathf.Max(1, discs.Count);
-			int w = VisorWidth(n), h = VisorHeight;
-			Canvas c = new Canvas(w, h);
+			int w = VisorWidth(n), h = VisorHeight, cw = VisorCanvasWidth(n);
+			pop = Mathf.Clamp(pop, 0, MaxPop);
+			Canvas c = new Canvas(cw, h);
 			// The padded visor: rounded corners at the bottom (the free edge), straight along the hinge at the top.
 			c.Rect(1, 0, w - 2, h - 1, VisorEdge);
 			c.Rect(0, 2, w - 1, h - 1, VisorEdge);
@@ -430,17 +443,17 @@ namespace HalfGripStereo
 			}
 			c.Rect(wx0, wy0, wx0, wy1, WalletEdge);
 			c.Rect(wx1, wy0, wx1, wy1, WalletEdge);
-			// A hovered last disc pulled out far enough sticks out past the wallet's right edge: drawn again over the edge and the
-			// visor beyond it (no sleeve reaches there), so it is not cut by the edge.
+			// A hovered last disc pulled out far enough sticks out past the wallet's right edge: drawn again over the edge, the visor
+			// beyond it and the clear spill past the visor (no sleeve reaches there), so it is not cut by either end.
 			int last = n - 1;
 			if (last < discs.Count && discs[last].Hovered && !discs[last].Out)
 			{
 				Vector2Int corner = DiscCorner(last);
-				Canvas over = new Canvas(w, h);
+				Canvas over = new Canvas(cw, h);
 				DrawDisc(over, corner.x + DiscRadius - 0.5f + pop, corner.y + DiscRadius - 0.5f, DiscRadius, discs[last].Label);
 				for (int y = 0; y < h; y++)
 				{
-					for (int x = wx1; x < w; x++)
+					for (int x = wx1; x < cw; x++)
 					{
 						Color32 p = over.Get(x, y);
 						if (p.a > 0)

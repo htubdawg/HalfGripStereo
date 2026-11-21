@@ -51,7 +51,7 @@ next session has, so after **every** step that changes the state of things, this
 - Pixel look: flat palette colours, point filtering, whole cockpit pixels; no smooth or rotated sprites.
 - Logging: everything but warnings through `Mod.Info` (only with `Debug.VerboseLog`).
 - C# 10, netstandard2.1, tabs, `///` summaries that explain why, try/catch + `LogWarning` round risky work.
-- Bump `version` in `mod.json` each release, the README's version in step. A changed default needs a migration (BepInEx keeps old values).
+- Bump `version` in `mod.json` each release, the README's version in step; release with the **Release** workflow after merging. A changed default needs a migration (BepInEx keeps old values).
 - Work on a branch and open a PR; do not push to `main`.
 - The README's Install leads with the HalfGripMods installer (as the other mods' do); in its by-hand steps keep it clear that only the
   `Stereo` folder goes into `HalfGripMods\` (`mod.json` directly inside `HalfGripMods\Stereo\`).
@@ -195,6 +195,10 @@ build once against the refs).
   live; a new key in unreleased 0.3.0, so no migration: an 8 already saved by a test stays). Checked: compiles, no warnings; `tools/preview` `visor-4x.png` (disc 4 popped out) and `visor-last-4x.png` (the last disc out
   past the wallet's edge, drawn over it cleanly). Untested in game. Note: with OffsetX 0.4 the right knob may sit inside the wheel's
   grab area again (the log's `right knob's nearest point` against `wheel's grab area`); the owner chose the value in game.
-- **PopOut 12, last disc:** the visor's texture ends 5 px past the wallet's right edge, so above 9 the last (MY) disc's popped right side
-  is cut flat at the visor's end (seen in `visor-last-4x.png`). Told the owner; waiting on whether it matters (don't widen the wallet).
+- **PopOut up to 16 fixed** (owner: "obviously fix that"; **a setting's whole range must work**): the visor's picture has `Art.Spill`
+  (8) clear columns right of the visor, so the last disc popped by up to `Art.MaxPop` (16) shows whole; placement and the drop area use
+  the visor's own width. Checked: `visor-last-4x.png` (12) and `visor-last-max-4x.png` (16) whole.
+- **Release workflow** (`.github/workflows/release.yml`, owner's ask): Actions -> Release -> Run workflow on `main`; version from
+  `Stereo/mod.json`, fails if the README's `**Version x**` differs or tag `v<version>` exists; zips `Stereo/` as `Stereo-v<version>.zip`,
+  tags, makes the release (generated notes, optional pre-release). Can't compile (no game DLLs in CI). Not run yet (no tags exist).
 - **Next step:** the owner tests 0.3.0 in game and merges the PR.

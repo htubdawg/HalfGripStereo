@@ -12,6 +12,7 @@ namespace HalfGripStereo
 	///   unit.png / unit-4x.png    the head unit with its display (the display at its own double resolution in the 4x one)
 	///   visor.png / visor-4x.png  the CD wallet with seven discs, the second in the stereo, the fourth hovered (popped out by the default Visor.PopOut, 12)
 	///   visor-last-4x.png         the same with the last disc hovered (out past the wallet's edge)
+	///   visor-last-max-4x.png     the last disc out by the most Visor.PopOut allows (16)
 	///   icon.png                  the mod's picture, 128x128 (copy to Stereo/icon.png)
 	/// </summary>
 	internal static class Program
@@ -60,6 +61,8 @@ namespace HalfGripStereo
 			}
 			Art.Canvas visorLast = Art.VisorWallet(looks, 12);
 			Png.Save(Path.Combine(dir, "visor-last-4x.png"), visorLast.Px, visorLast.W, visorLast.H, 4);
+			Art.Canvas visorMax = Art.VisorWallet(looks, Art.MaxPop);
+			Png.Save(Path.Combine(dir, "visor-last-max-4x.png"), visorMax.Px, visorMax.W, visorMax.H, 4);
 
 			// The mod's picture: the head unit with a disc going in, on 64x64, shown at 128.
 			Art.Canvas icon = new Art.Canvas(64, 64);
